@@ -1,0 +1,10 @@
+#N canvas 400 200 450 300 16;
+#X obj 190 150 helloworld;
+#X obj 160 70 bng 24 250 50 0 empty empty empty 0 -12 0 16 #ff8300 #fcfcfc #fcfcfc;
+#X msg 190 70 symbol zig;
+#X floatatom 190 190 0 0 0 0 - - - 0;
+#X floatatom 210 110 0 0 0 0 - - - 0;
+#X connect 0 0 3 0;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 4 0 0 0;

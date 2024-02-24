@@ -238,7 +238,7 @@ typedef struct _text        /* patchable object - graphical, with text */
     short te_xpix;              /* x&y location (within the toplevel) */
     short te_ypix;
     short te_width;             /* requested width in chars, 0 if auto */
-    unsigned int te_type:2;     /* from defs below */
+    unsigned char te_type;      /* from defs below */
 } t_text;
 
 #define T_TEXT 0        /* just a textual comment */
