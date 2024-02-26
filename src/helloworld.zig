@@ -5,7 +5,7 @@ const c = @cImport({
 // -------------------------------- hello world --------------------------------
 var helloworld_class: ?*c.t_class = null;
 
-const t_helloworld = struct {
+const t_helloworld = extern struct {
 	x_obj: c.t_object,
 	x_s: *c.t_symbol,
 };
