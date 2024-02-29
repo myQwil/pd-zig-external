@@ -31,12 +31,10 @@ const t_helloworld = extern struct {
 
 	fn setup() void {
 		class = c.class_new(c.gensym("helloworld"),
-			@ptrCast(&Self.new), null,
-			@sizeOf(Self), c.CLASS_DEFAULT, 0);
-
-		c.class_addbang(class, @ptrCast(&Self.bang));
-		c.class_doaddfloat(class, @ptrCast(&Self.float));
-		c.class_addsymbol(class, @ptrCast(&Self.symbol));
+			@ptrCast(&new), null, @sizeOf(Self), c.CLASS_DEFAULT, 0);
+		c.class_addbang(class, @ptrCast(&bang));
+		c.class_doaddfloat(class, @ptrCast(&float));
+		c.class_addsymbol(class, @ptrCast(&symbol));
 	}
 };
 
