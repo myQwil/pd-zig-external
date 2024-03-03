@@ -7,7 +7,7 @@ const t_helloworld = extern struct {
 	const Self = @This();
 	var class: ?*c.t_class = undefined;
 
-	base: c.t_object,
+	obj: c.t_object,
 	sym: *c.t_symbol,
 
 	fn bang(self: *Self) void {
@@ -15,7 +15,7 @@ const t_helloworld = extern struct {
 	}
 
 	fn float(self: *Self, f: c.t_float) void {
-		c.outlet_float(self.base.te_outlet, f * 2);
+		c.outlet_float(self.obj.te_outlet, f * 2);
 	}
 
 	fn symbol(self: *Self, s: *c.t_symbol) void {
@@ -24,7 +24,7 @@ const t_helloworld = extern struct {
 
 	fn new() *Self {
 		const self: *Self = @ptrCast(c.pd_new(class));
-		_ = c.outlet_new(&self.base, &c.s_float);
+		_ = c.outlet_new(&self.obj, &c.s_float);
 		self.sym = c.gensym("world");
 		return self;
 	}
