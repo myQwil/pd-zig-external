@@ -5,7 +5,7 @@ const c = @cImport({
 // -------------------------------- hello world --------------------------------
 const t_helloworld = extern struct {
 	const Self = @This();
-	var class: ?*c.t_class = undefined;
+	var class: *c.t_class = undefined;
 
 	obj: c.t_object,
 	sym: *c.t_symbol,
@@ -31,7 +31,7 @@ const t_helloworld = extern struct {
 
 	fn setup() void {
 		class = c.class_new(c.gensym("helloworld"),
-			@ptrCast(&new), null, @sizeOf(Self), c.CLASS_DEFAULT, 0);
+			@ptrCast(&new), null, @sizeOf(Self), c.CLASS_DEFAULT, 0).?;
 		c.class_addbang(class, @ptrCast(&bang));
 		c.class_doaddfloat(class, @ptrCast(&float));
 		c.class_addsymbol(class, @ptrCast(&symbol));
