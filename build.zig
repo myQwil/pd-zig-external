@@ -16,7 +16,9 @@ pub fn build(b: *std.Build) !void {
 				.root_source_file = .{ .path = s },
 				.target = target,
 				.optimize = optimize,
+				.link_libc = true,
 			});
+			artifact.force_pic = true;
 			artifact.addIncludePath(.{ .cwd_relative = "src" });
 			artifact.addSystemIncludePath(.{ .cwd_relative = "/usr/include" });
 
