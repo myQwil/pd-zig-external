@@ -10,11 +10,11 @@ const t_helloworld = extern struct {
 	obj: c.t_object,
 	sym: *c.t_symbol,
 
-	fn bang(self: *Self) void {
+	fn bang(self: *const Self) void {
 		c.post("Hello %s!", self.sym.s_name);
 	}
 
-	fn float(self: *Self, f: c.t_float) void {
+	fn float(self: *const Self, f: c.t_float) void {
 		c.outlet_float(self.obj.te_outlet, f * 2);
 	}
 

@@ -17,15 +17,15 @@ pub fn build(b: *std.Build) !void {
 				.target = target,
 				.optimize = optimize,
 				.link_libc = true,
+				.pic = true
 			});
-			artifact.force_pic = true;
 			artifact.addIncludePath(.{ .cwd_relative = "src" });
 			artifact.addSystemIncludePath(.{ .cwd_relative = "/usr/include" });
 
 			s = try std.fmt.bufPrint(&buf, "{s}.pd_linux", .{source});
 			std.debug.print("{s}\n", .{s});
 
-			const install = b.addInstallFile(artifact.getOutputSource(), s);
+			const install = b.addInstallFile(artifact.getEmittedBin(), s);
 			install.step.dependOn(&artifact.step);
 			b.getInstallStep().dependOn(&install.step);
 		}
@@ -33,7 +33,7 @@ pub fn build(b: *std.Build) !void {
 
 	std.debug.print("\n---------- Help files ----------\n", .{});
 	{
-		const dir = try std.fs.cwd().openIterableDir("help", .{});
+		const dir = try std.fs.cwd().openDir("help", .{ .iterate = true });
 		var iter = dir.iterate();
 		while (try iter.next()) |file| {
 			if (file.kind != .file) {
