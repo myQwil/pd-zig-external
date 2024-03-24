@@ -1,43 +1,41 @@
-const c = @cImport({
-	@cInclude("m_pd.h");
-});
+const pd = @import("pd.zig");
 
 // -------------------------------- hello world --------------------------------
-const t_helloworld = extern struct {
+const HelloWorld = extern struct {
 	const Self = @This();
-	var class: *c.t_class = undefined;
+	var class: *pd.Class = undefined;
 
-	obj: c.t_object,
-	sym: *c.t_symbol,
+	obj: pd.Object,
+	sym: *pd.Symbol,
 
 	fn bang(self: *const Self) void {
-		c.post("Hello %s!", self.sym.s_name);
+		pd.post("Hello %s!", self.sym.name);
 	}
 
-	fn float(self: *const Self, f: c.t_float) void {
-		c.outlet_float(self.obj.te_outlet, f * 2);
+	fn float(self: *const Self, f: pd.Float) void {
+		self.obj.out.float(f * 2);
 	}
 
-	fn symbol(self: *Self, s: *c.t_symbol) void {
+	fn symbol(self: *Self, s: *pd.Symbol) void {
 		self.sym = s;
 	}
 
 	fn new() *Self {
-		const self: *Self = @ptrCast(c.pd_new(class));
-		_ = c.outlet_new(&self.obj, &c.s_float);
-		self.sym = c.gensym("world");
+		const self: *Self = @ptrCast(class.new());
+		_ = self.obj.outlet(pd.s.float);
+		self.sym = pd.symbol("world");
 		return self;
 	}
 
 	fn setup() void {
-		class = c.class_new(c.gensym("helloworld"),
-			@ptrCast(&new), null, @sizeOf(Self), c.CLASS_DEFAULT, 0).?;
-		c.class_addbang(class, @ptrCast(&bang));
-		c.class_doaddfloat(class, @ptrCast(&float));
-		c.class_addsymbol(class, @ptrCast(&symbol));
+		class = pd.class(pd.symbol("helloworld"), @ptrCast(&new), null,
+			@sizeOf(Self), pd.Class.DEFAULT, 0);
+		class.addBang(@ptrCast(&bang));
+		class.addFloat(@ptrCast(&float));
+		class.addSymbol(@ptrCast(&symbol));
 	}
 };
 
 export fn helloworld_setup() void {
-	t_helloworld.setup();
+	HelloWorld.setup();
 }
