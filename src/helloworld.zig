@@ -20,8 +20,8 @@ const HelloWorld = extern struct {
 		self.sym = s;
 	}
 
-	fn new() *Self {
-		const self: *Self = @ptrCast(class.new());
+	fn new() ?*Self {
+		const self: *Self = @ptrCast(class.new() orelse return null);
 		_ = self.obj.outlet(pd.s.float);
 		self.sym = pd.symbol("world");
 		return self;

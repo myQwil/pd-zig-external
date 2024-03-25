@@ -143,7 +143,7 @@ extern fn class_setpropertiesfn(*Class, PropertiesFn) void;
 extern fn class_getpropertiesfn(*const Class) PropertiesFn;
 pub const ClassFreeFn = ?*const fn (*Class) callconv(.C) void;
 extern fn class_setfreefn(*Class, ClassFreeFn) void;
-extern fn pd_new(*Class) *Pd;
+extern fn pd_new(*Class) ?*Pd;
 extern fn pd_findbyclass(*Symbol, *const Class) ?*Pd;
 pub const Class = extern struct {
 	name: *Symbol,
