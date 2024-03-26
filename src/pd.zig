@@ -23,11 +23,11 @@ pub const Atom = extern struct {
 	type: u32,
 	w: Word,
 
-	pub const getFloat = atom_getfloat;
-	pub const getInt = atom_getint;
-	pub const getSymbol = atom_getsymbol;
+	pub const float = atom_getfloat;
+	pub const int = atom_getint;
+	pub const symbol = atom_getsymbol;
 	pub const genSymbol = atom_gensym;
-	pub const string = atom_string;
+	pub const toString = atom_string;
 
 	pub inline fn getFloatArg(self: *const Atom, which: u32, ac: u32) Float {
 		return atom_getfloatarg(which, ac, self);
@@ -333,9 +333,9 @@ pub const GPointer = extern struct {
 extern fn inlet_free(*Inlet) void;
 pub const Inlet = extern struct {
 	pd: Pd,
-	next: *Inlet,
+	next: ?*Inlet,
 	owner: *Object,
-	dest: *Pd,
+	dest: ?*Pd,
 	symfrom: *Symbol,
 	un: extern union {
 		symto: *Symbol,
@@ -346,6 +346,33 @@ pub const Inlet = extern struct {
 	},
 
 	pub const free = inlet_free;
+};
+
+
+// ---------------------------------- Memory -----------------------------------
+// -----------------------------------------------------------------------------
+const Allocator = @import("std").mem.Allocator;
+const assert = @import("std").debug.assert;
+extern fn getbytes(usize) ?[*]u8;
+extern fn freebytes(*anyopaque, usize) void;
+fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
+	assert(len > 0);
+	return getbytes(len);
+}
+fn resize(_: *anyopaque, buf: []u8, _: u8, new_len: usize, _: usize) bool {
+	return (new_len <= buf.len);
+}
+fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
+	freebytes(buf.ptr, buf.len);
+}
+pub const mem = Allocator {
+	.ptr = undefined,
+	.vtable = &mem_vtable,
+};
+const mem_vtable = Allocator.VTable {
+	.alloc = alloc,
+	.resize = resize,
+	.free = free,
 };
 
 
@@ -363,7 +390,7 @@ pub const Object = extern struct {
 	g: GObj,
 	binbuf: *BinBuf,
 	out: *Outlet,
-	in: *Inlet,
+	in: ?*Inlet,
 	xpix: i16,
 	ypix: i16,
 	width: i16,
@@ -587,18 +614,18 @@ extern fn sys_zoomfontwidth(c_int, c_int, c_int) c_int;
 extern fn sys_zoomfontheight(c_int, c_int, c_int) c_int;
 extern fn sys_fontwidth(c_int) c_int;
 extern fn sys_fontheight(c_int) c_int;
-pub const getBlockSize = sys_getblksize;
-pub const getSampleRate = sys_getsr;
-pub const getInChannels = sys_get_inchannels;
-pub const getOutChannels = sys_get_outchannels;
+pub const blockSize = sys_getblksize;
+pub const sampleRate = sys_getsr;
+pub const inChannels = sys_get_inchannels;
+pub const outChannels = sys_get_outchannels;
 pub const vgui = sys_vgui;
 pub const gui = sys_gui;
 pub const pretendGuiBytes = sys_pretendguibytes;
 pub const queueGui = sys_queuegui;
 pub const unqueueGui = sys_unqueuegui;
-pub const getVersion = sys_getversion;
-pub const getFloatSize = sys_getfloatsize;
-pub const getRealTime = sys_getrealtime;
+pub const version = sys_getversion;
+pub const floatSize = sys_getfloatsize;
+pub const realTime = sys_getrealtime;
 pub const open = sys_open;
 pub const close = sys_close;
 // pub const fopen = sys_fopen;
@@ -631,25 +658,25 @@ extern fn clock_getsystime() f64;
 extern fn clock_gettimesince(f64) f64;
 extern fn clock_gettimesincewithunits(f64, f64, u32) f64;
 extern fn clock_getsystimeafter(f64) f64;
-pub const getLogicalTime = clock_getlogicaltime;
-pub const getSysTime = clock_getsystime;
-pub const getTimeSince = clock_gettimesince;
-pub const getTimeSinceWithUnits = clock_gettimesincewithunits;
-pub const getSysTimeAfter = clock_getsystimeafter;
+pub const logicalTime = clock_getlogicaltime;
+pub const sysTime = clock_getsystime;
+pub const timeSince = clock_gettimesince;
+pub const timeSinceWithUnits = clock_gettimesincewithunits;
+pub const sysTimeAfter = clock_getsystimeafter;
 
 extern fn canvas_getcurrentdir() *Symbol;
 extern fn canvas_suspend_dsp() c_int;
 extern fn canvas_resume_dsp(c_int) void;
 extern fn canvas_update_dsp() void;
-pub const getCurrentDir = canvas_getcurrentdir;
+pub const currentDir = canvas_getcurrentdir;
 pub const suspendDsp = canvas_suspend_dsp;
 pub const resumeDsp = canvas_resume_dsp;
 pub const updateDsp = canvas_update_dsp;
 
 extern fn pd_getcanvaslist() ?*GList;
 extern fn pd_getdspstate() c_int;
-pub const getCanvasList = pd_getcanvaslist;
-pub const getDspState = pd_getdspstate;
+pub const canvasList = pd_getcanvaslist;
+pub const dspState = pd_getdspstate;
 
 extern fn pd_error(?*const anyopaque, [*]const u8, ...) void;
 pub const err = pd_error;
@@ -700,12 +727,6 @@ pub const GotFn4 = ?*const fn (*anyopaque, *anyopaque, *anyopaque, *anyopaque, *
 pub const GotFn5 = ?*const fn (*anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque) callconv(.C) void;
 
 pub extern fn nullfn() void;
-
-pub extern fn getbytes(usize) ?*anyopaque;
-pub extern fn getzbytes(usize) ?*anyopaque;
-pub extern fn copybytes(?*const anyopaque, usize) ?*anyopaque;
-pub extern fn freebytes(?*anyopaque, usize) void;
-pub extern fn resizebytes(?*anyopaque, usize, usize) ?*anyopaque;
 
 pub extern fn glob_setfilename(?*anyopaque, *Symbol, *Symbol) void;
 
