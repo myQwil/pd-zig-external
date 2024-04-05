@@ -5,37 +5,37 @@ pub const Float = f32;
 pub const Sample = f32;
 pub const FloatUInt = if (Float == f64) u64 else u32;
 
-pub const Method = ?*const fn () callconv(.C) void;
-pub const NewMethod = ?*const fn () callconv(.C) *anyopaque;
+pub const Method = ?*const fn () void;
+pub const NewMethod = ?*const fn () *anyopaque;
 
 
 // ----------------------------------- Atom ------------------------------------
 // -----------------------------------------------------------------------------
-extern fn atom_getfloat(*const Atom) Float;
-extern fn atom_getint(*const Atom) Int;
-extern fn atom_getsymbol(*const Atom) *Symbol;
 extern fn atom_gensym(*const Atom) *Symbol;
 extern fn atom_string(*const Atom, [*]u8, u32) void;
-extern fn atom_getfloatarg(u32, u32, *const Atom) Float;
+extern fn atom_getint(*const Atom) Int;
+extern fn atom_getfloat(*const Atom) Float;
+extern fn atom_getsymbol(*const Atom) *Symbol;
 extern fn atom_getintarg(u32, u32, *const Atom) Int;
+extern fn atom_getfloatarg(u32, u32, *const Atom) Float;
 extern fn atom_getsymbolarg(u32, u32, *const Atom) *Symbol;
 pub const Atom = extern struct {
 	type: u32,
 	w: Word,
 
-	pub const float = atom_getfloat;
+	pub const toSymbol = atom_gensym;
+	pub const bufPrint = atom_string;
 	pub const int = atom_getint;
+	pub const float = atom_getfloat;
 	pub const symbol = atom_getsymbol;
-	pub const genSymbol = atom_gensym;
-	pub const toString = atom_string;
 
-	pub inline fn getFloatArg(self: *const Atom, which: u32, ac: u32) Float {
-		return atom_getfloatarg(which, ac, self);
-	}
-	pub inline fn getIntArg(self: *const Atom, which: u32, ac: u32) Int {
+	pub inline fn intArg(self: *const Atom, which: u32, ac: u32) Int {
 		return atom_getintarg(which, ac, self);
 	}
-	pub inline fn getSymbolArg(self: *const Atom, which: u32, ac: u32) *Symbol {
+	pub inline fn floatArg(self: *const Atom, which: u32, ac: u32) Float {
+		return atom_getfloatarg(which, ac, self);
+	}
+	pub inline fn symbolArg(self: *const Atom, which: u32, ac: u32) *Symbol {
 		return atom_getsymbolarg(which, ac, self);
 	}
 };
@@ -81,8 +81,8 @@ extern fn binbuf_write(*const BinBuf, [*]const u8, [*]const u8, u32) u32;
 pub const BinBuf = opaque {
 	pub const free = binbuf_free;
 	pub const duplicate = binbuf_duplicate;
-	pub const text = binbuf_text;
-	pub const getText = binbuf_gettext;
+	pub const fromText = binbuf_text;
+	pub const text = binbuf_gettext;
 	pub const clear = binbuf_clear;
 	pub const add = binbuf_add;
 	pub const addV = binbuf_addv;
@@ -90,8 +90,8 @@ pub const BinBuf = opaque {
 	pub const addSemi = binbuf_addsemi;
 	pub const restore = binbuf_restore;
 	pub const print = binbuf_print;
-	pub const getNAtom = binbuf_getnatom;
-	pub const getVec = binbuf_getvec;
+	pub const nAtoms = binbuf_getnatom;
+	pub const vec = binbuf_getvec;
 	pub const resize = binbuf_resize;
 	pub const eval = binbuf_eval;
 	pub const read = binbuf_read;
@@ -111,12 +111,12 @@ pub const MethodEntry = extern struct {
 	arg: [6]u8,
 };
 
-pub const BangMethod = ?*const fn (*Pd) callconv(.C) void;
-pub const PointerMethod = ?*const fn (*Pd, *GPointer) callconv(.C) void;
-pub const FloatMethod = ?*const fn (*Pd, Float) callconv(.C) void;
-pub const SymbolMethod = ?*const fn (*Pd, *Symbol) callconv(.C) void;
-pub const ListMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) callconv(.C) void;
-pub const AnyMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) callconv(.C) void;
+pub const BangMethod = ?*const fn (*Pd) void;
+pub const PointerMethod = ?*const fn (*Pd, *GPointer) void;
+pub const FloatMethod = ?*const fn (*Pd, Float) void;
+pub const SymbolMethod = ?*const fn (*Pd, *Symbol) void;
+pub const ListMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) void;
+pub const AnyMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) void;
 
 extern fn class_free(*Class) void;
 extern fn class_addmethod(*Class, Method, *Symbol, u32, ...) void;
@@ -134,14 +134,14 @@ extern fn class_gethelpname(*const Class) [*]const u8;
 extern fn class_gethelpdir(*const Class) [*]const u8;
 extern fn class_setdrawcommand(*Class) void;
 extern fn class_isdrawcommand(*const Class) i32;
-extern fn class_domainsignalin(*Class, c_int) void;
-pub const SaveFn = ?*const fn (*GObj, ?*BinBuf) callconv(.C) void;
+extern fn class_domainsignalin(*Class, i32) void;
+pub const SaveFn = ?*const fn (*GObj, ?*BinBuf) void;
 extern fn class_setsavefn(*Class, SaveFn) void;
 extern fn class_getsavefn(*const Class) SaveFn;
-pub const PropertiesFn = *const fn (*GObj, *GList) callconv(.C) void;
+pub const PropertiesFn = ?*const fn (*GObj, *GList) void;
 extern fn class_setpropertiesfn(*Class, PropertiesFn) void;
 extern fn class_getpropertiesfn(*const Class) PropertiesFn;
-pub const ClassFreeFn = ?*const fn (*Class) callconv(.C) void;
+pub const ClassFreeFn = ?*const fn (*Class) void;
 extern fn class_setfreefn(*Class, ClassFreeFn) void;
 extern fn pd_new(*Class) ?*Pd;
 extern fn pd_findbyclass(*Symbol, *const Class) ?*Pd;
@@ -179,16 +179,16 @@ pub const Class = extern struct {
 	pub const setHelpSymbol = class_sethelpsymbol;
 	pub const setWidget = class_setwidget;
 	pub const setParentWidget = class_setparentwidget;
-	pub const getName = class_getname;
-	pub const getHelpName = class_gethelpname;
-	pub const getHelpDir = class_gethelpdir;
+	pub const name = class_getname;
+	pub const helpName = class_gethelpname;
+	pub const helpDir = class_gethelpdir;
 	pub const setDrawCommand = class_setdrawcommand;
 	pub const isDrawCommand = class_isdrawcommand;
 	pub const doMainSignalIn = class_domainsignalin;
 	pub const setSaveFn = class_setsavefn;
-	pub const getSaveFn = class_getsavefn;
+	pub const saveFn = class_getsavefn;
 	pub const setPropertiesFn = class_setpropertiesfn;
-	pub const getPropertiesFn = class_getpropertiesfn;
+	pub const propertiesFn = class_getpropertiesfn;
 	pub const setFreeFn = class_setfreefn;
 	pub const new = pd_new;
 
@@ -231,7 +231,17 @@ pub const Clock = opaque {
 	pub const free = clock_free;
 };
 extern fn clock_new(*anyopaque, Method) *Clock;
+extern fn clock_getlogicaltime() f64;
+extern fn clock_getsystime() f64;
+extern fn clock_gettimesince(f64) f64;
+extern fn clock_gettimesincewithunits(f64, f64, u32) f64;
+extern fn clock_getsystimeafter(f64) f64;
 pub const clock = clock_new;
+pub const logicalTime = clock_getlogicaltime;
+pub const sysTime = clock_getsystime;
+pub const timeSince = clock_gettimesince;
+pub const timeSinceWithUnits = clock_gettimesincewithunits;
+pub const sysTimeAfter = clock_getsystimeafter;
 
 
 // ------------------------------------ Dsp ------------------------------------
@@ -254,20 +264,19 @@ pub const Dsp = struct {
 
 // ---------------------------------- GArray -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn garray_getfloatarray(*GArray, *u32, *?[*]Float) i32;
-extern fn garray_getfloatwords(*GArray, *u32, *?[*]Word) i32;
+extern fn garray_getfloatarray(*GArray, *u32, *[*]Float) u32;
+extern fn garray_getfloatwords(*GArray, *u32, *[*]Word) u32;
 extern fn garray_redraw(*GArray) void;
-extern fn garray_npoints(*GArray) i32;
+extern fn garray_npoints(*GArray) u32;
 extern fn garray_vec(*GArray) [*]u8;
 extern fn garray_resize(*GArray, Float) void;
 extern fn garray_resize_long(*GArray, i64) void;
 extern fn garray_usedindsp(*GArray) void;
 extern fn garray_setsaveit(*GArray, i32) void;
 extern fn garray_getglist(*GArray) *GList;
-extern fn garray_getarray(*GArray) *Array;
+extern fn garray_getarray(*GArray) ?*Array;
 pub const GArray = opaque {
-	pub const getFloatArray = garray_getfloatarray;
-	pub const getFloatWords = garray_getfloatwords;
+	pub const floatArray = garray_getfloatarray;
 	pub const redraw = garray_redraw;
 	pub const nPoints = garray_npoints;
 	pub const vec = garray_vec;
@@ -275,8 +284,14 @@ pub const GArray = opaque {
 	pub const resizeLong = garray_resize_long;
 	pub const useInDsp = garray_usedindsp;
 	pub const setSaveIt = garray_setsaveit;
-	pub const getGList = garray_getglist;
-	pub const getArray = garray_getarray;
+	pub const glist = garray_getglist;
+	pub const array = garray_getarray;
+
+	pub fn floatWords(self: *GArray) ?[]Word {
+		var len: u32 = undefined;
+		var wp: [*]Word = undefined;
+		return if (garray_getfloatwords(self, &len, &wp) != 0) wp[0..len] else null;
+	}
 };
 
 
@@ -294,16 +309,16 @@ extern fn canvas_getargs(*u32, *[*]Atom) void;
 extern fn canvas_getcurrent() ?*GList;
 pub const GList = opaque {
 	pub const makeFilename = canvas_makefilename;
-	pub const getDir = canvas_getdir;
+	pub const dir = canvas_getdir;
 	pub const dataProperties = canvas_dataproperties;
 	pub const open = canvas_open;
-	pub const getSampleRate = canvas_getsr;
-	pub const getSignalLength = canvas_getsignallength;
+	pub const sampleRate = canvas_getsr;
+	pub const signalLength = canvas_getsignallength;
 	pub const undoSetState = pd_undo_set_objectstate;
 	// static methods
 	pub const setArgs = canvas_setargs;
-	pub const getArgs = canvas_getargs;
-	pub const getCurrent = canvas_getcurrent;
+	pub const args = canvas_getargs;
+	pub const current = canvas_getcurrent;
 };
 
 
@@ -318,7 +333,7 @@ pub const GPointer = extern struct {
 		scalar: *Scalar,
 		w: *Word,
 	},
-	valid: c_int,
+	valid: i32,
 	stub: *GStub,
 
 	pub const init = gpointer_init;
@@ -394,7 +409,12 @@ pub const Object = extern struct {
 	xpix: i16,
 	ypix: i16,
 	width: i16,
-	type: ObjectType,
+	type: enum(u8) {
+		text = 0,
+		object = 1,
+		message = 2,
+		atom = 3,
+	},
 
 	pub const list = obj_list;
 	pub const saveFormat = obj_saveformat;
@@ -404,13 +424,19 @@ pub const Object = extern struct {
 	pub const inletFloat = floatinlet_new;
 	pub const inletSymbol = symbolinlet_new;
 	pub const inletSignal = signalinlet_new;
-};
 
-pub const ObjectType = enum(u8) {
-	text = 0,
-	object = 1,
-	message = 2,
-	atom = 3,
+	pub inline fn inletFloatArg(obj: *Object, fp: *Float, av: []const Atom, i: usize)
+	*Inlet {
+		fp.* = (&av[0]).floatArg(@intCast(i), @intCast(av.len));
+		return obj.inletFloat(fp);
+	}
+
+	pub inline fn inletSymbolArg(obj: *Object, sp: **Symbol, av: []const Atom, i: usize)
+	*Inlet {
+		sp.* = (&av[0]).symbolArg(@intCast(i), @intCast(av.len));
+		return obj.inletSymbol(sp);
+	}
+
 };
 
 
@@ -431,7 +457,7 @@ pub const Outlet = opaque {
 	pub const symbol = outlet_symbol;
 	pub const list = outlet_list;
 	pub const anything = outlet_anything;
-	pub const getSymbol = outlet_getsymbol;
+	pub const toSymbol = outlet_getsymbol;
 	pub const free = outlet_free;
 };
 
@@ -477,11 +503,11 @@ pub const Pd = extern struct {
 	pub const typedMess = pd_typedmess;
 	pub const forwardMess = pd_forwardmess;
 	pub const checkObject = pd_checkobject;
-	pub const getParentWidget = pd_getparentwidget;
+	pub const parentWidget = pd_getparentwidget;
 	pub const gfxStub = gfxstub_new;
 	pub const guiStub = pdgui_stub_vnew;
-	pub const getFn = getfn;
-	pub const zGetFn = zgetfn;
+	pub const func = getfn;
+	pub const zFunc = zgetfn;
 	pub const newest = pd_newest; // static
 };
 
@@ -494,9 +520,9 @@ extern fn resample_dsp(*Resample, [*]Sample, u32, [*]Sample, u32, u32) void;
 extern fn resamplefrom_dsp(*Resample, [*]Sample, u32, u32, u32) void;
 extern fn resampleto_dsp(*Resample, [*]Sample, u32, u32, u32) void;
 pub const Resample = extern struct {
-	method: c_int,
-	downsample: c_int,
-	upsample: c_int,
+	method: i32,
+	downsample: i32,
+	upsample: i32,
 	vec: [*]Sample,
 	n: u32,
 	coeffs: [*]Sample,
@@ -529,7 +555,9 @@ pub const Signal = extern struct {
 	nalloc: i32,
 };
 extern fn signal_new(u32, u32, Float, [*]Sample) *Signal;
+extern fn signal_setmultiout(*[*]Signal, u32) void;
 pub const signal = signal_new;
+pub const setMultiOut = signal_setmultiout;
 
 
 // ---------------------------------- Symbol -----------------------------------
@@ -547,11 +575,11 @@ pub const Symbol = extern struct {
 	next: ?*Symbol,
 
 	pub const setExternDir = class_set_extern_dir;
-	pub const getBuf = text_getbufbyname;
+	pub const buf = text_getbufbyname;
 	pub const notify = text_notifybyname;
-	pub const getVal = value_get;
+	pub const val = value_get;
 	pub const releaseVal = value_release;
-	pub const getFloat = value_getfloat;
+	pub const float = value_getfloat;
 	pub const setFloat = value_setfloat;
 };
 extern fn gensym([*]const u8) *Symbol;
@@ -597,23 +625,23 @@ extern fn sys_pretendguibytes(i32) void;
 extern fn sys_queuegui(?*anyopaque, ?*GList, GuiCallbackFn) void;
 extern fn sys_unqueuegui(?*anyopaque) void;
 extern fn sys_getversion(*i32, *i32, *i32) void;
-extern fn sys_getfloatsize() c_uint;
+extern fn sys_getfloatsize() u32;
 extern fn sys_getrealtime() f64;
-extern fn sys_open([*]const u8, c_int, ...) c_int;
-extern fn sys_close(c_int) c_int;
+extern fn sys_open([*]const u8, i32, ...) i32;
+extern fn sys_close(i32) i32;
 // extern fn sys_fopen([*]const u8, [*]const u8) *FILE;
-// extern fn sys_fclose(*FILE) c_int;
+// extern fn sys_fclose(*FILE) i32;
 extern fn sys_lock() void;
 extern fn sys_unlock() void;
-extern fn sys_trylock() c_int;
-extern fn sys_isabsolutepath([*]const u8) c_int;
+extern fn sys_trylock() i32;
+extern fn sys_isabsolutepath([*]const u8) i32;
 extern fn sys_bashfilename([*]const u8, [*]u8) void;
 extern fn sys_unbashfilename([*]const u8, [*]u8) void;
-extern fn sys_hostfontsize(c_int, c_int) c_int;
-extern fn sys_zoomfontwidth(c_int, c_int, c_int) c_int;
-extern fn sys_zoomfontheight(c_int, c_int, c_int) c_int;
-extern fn sys_fontwidth(c_int) c_int;
-extern fn sys_fontheight(c_int) c_int;
+extern fn sys_hostfontsize(i32, i32) i32;
+extern fn sys_zoomfontwidth(i32, i32, i32) i32;
+extern fn sys_zoomfontheight(i32, i32, i32) i32;
+extern fn sys_fontwidth(i32) i32;
+extern fn sys_fontheight(i32) i32;
 pub const blockSize = sys_getblksize;
 pub const sampleRate = sys_getsr;
 pub const inChannels = sys_get_inchannels;
@@ -650,23 +678,9 @@ extern fn binbuf_realizedollsym(*Symbol, u32, [*]const Atom, u32) *Symbol;
 pub const evalFile = binbuf_evalfile;
 pub const realizeDollSym = binbuf_realizedollsym;
 
-extern fn signal_setmultiout(*[*]Signal, u32) void;
-pub const setMultiOut = signal_setmultiout;
-
-extern fn clock_getlogicaltime() f64;
-extern fn clock_getsystime() f64;
-extern fn clock_gettimesince(f64) f64;
-extern fn clock_gettimesincewithunits(f64, f64, u32) f64;
-extern fn clock_getsystimeafter(f64) f64;
-pub const logicalTime = clock_getlogicaltime;
-pub const sysTime = clock_getsystime;
-pub const timeSince = clock_gettimesince;
-pub const timeSinceWithUnits = clock_gettimesincewithunits;
-pub const sysTimeAfter = clock_getsystimeafter;
-
 extern fn canvas_getcurrentdir() *Symbol;
-extern fn canvas_suspend_dsp() c_int;
-extern fn canvas_resume_dsp(c_int) void;
+extern fn canvas_suspend_dsp() i32;
+extern fn canvas_resume_dsp(i32) void;
 extern fn canvas_update_dsp() void;
 pub const currentDir = canvas_getcurrentdir;
 pub const suspendDsp = canvas_suspend_dsp;
@@ -674,7 +688,7 @@ pub const resumeDsp = canvas_resume_dsp;
 pub const updateDsp = canvas_update_dsp;
 
 extern fn pd_getcanvaslist() ?*GList;
-extern fn pd_getdspstate() c_int;
+extern fn pd_getdspstate() i32;
 pub const canvasList = pd_getcanvaslist;
 pub const dspState = pd_getdspstate;
 
@@ -697,7 +711,11 @@ pub const GStub = extern struct {
 		glist: *GList,
 		array: *Array,
 	},
-	which: i32,
+	which: enum(u32) {
+		none,
+		glist,
+		array,
+	},
 	refcount: i32,
 };
 
@@ -713,18 +731,20 @@ pub const Word = extern union {
 	gpointer: *GPointer,
 	array: *Array,
 	binbuf: *BinBuf,
-	index: c_int,
+	index: i32,
 };
 
 pub extern var pd_objectmaker: Pd;
 pub extern var pd_canvasmaker: Pd;
 
 pub const GotFn = ?*const fn (*anyopaque, ...) callconv(.C) void;
-pub const GotFn1 = ?*const fn (*anyopaque, *anyopaque) callconv(.C) void;
-pub const GotFn2 = ?*const fn (*anyopaque, *anyopaque, *anyopaque) callconv(.C) void;
-pub const GotFn3 = ?*const fn (*anyopaque, *anyopaque, *anyopaque, *anyopaque) callconv(.C) void;
-pub const GotFn4 = ?*const fn (*anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque) callconv(.C) void;
-pub const GotFn5 = ?*const fn (*anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque) callconv(.C) void;
+pub const GotFn1 = ?*const fn (*anyopaque, *anyopaque) void;
+pub const GotFn2 = ?*const fn (*anyopaque, *anyopaque, *anyopaque) void;
+pub const GotFn3 = ?*const fn (*anyopaque, *anyopaque, *anyopaque, *anyopaque) void;
+pub const GotFn4 = ?*const fn (
+	*anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque) void;
+pub const GotFn5 = ?*const fn (
+	*anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque) void;
 
 pub extern fn nullfn() void;
 
@@ -748,38 +768,60 @@ pub extern fn postatom(u32, [*]const Atom) void;
 pub extern fn endpost() void;
 
 pub extern fn bug([*]const u8, ...) void;
-pub extern fn logpost(?*const anyopaque, c_int, [*]const u8, ...) void;
-pub extern fn verbose(c_int, [*]const u8, ...) void;
+pub extern fn logpost(?*const anyopaque, LogLevel, [*]const u8, ...) void;
+pub extern fn verbose(u32, [*]const u8, ...) void;
 pub const LogLevel = enum(u32) {
 	critical,
 	err,
 	normal,
 	debug,
-	verbose
+	verbose,
 };
 
 pub extern fn open_via_path([*]const u8, [*]const u8, [*]const u8, [*]u8, *[*]u8, u32, u32) i32;
-pub extern fn sched_geteventno() c_int;
-pub extern var sys_idlehook: ?*const fn () callconv(.C) c_int;
+pub extern fn sched_geteventno() i32;
+pub extern var sys_idlehook: ?*const fn () i32;
 
-pub const PerfRoutine = ?*const fn ([*]Int) *Int;
-pub extern fn plus_perform([*]Int) *Int;
-pub extern fn plus_perf8([*]Int) *Int;
-pub extern fn zero_perform([*]Int) *Int;
-pub extern fn zero_perf8([*]Int) *Int;
-pub extern fn copy_perform([*]Int) *Int;
-pub extern fn copy_perf8([*]Int) *Int;
-pub extern fn scalarcopy_perform([*]Int) *Int;
-pub extern fn scalarcopy_perf8([*]Int) *Int;
+pub const PerfRoutine = ?*const fn ([*]usize) *usize;
+pub extern fn plus_perform([*]usize) *usize;
+pub extern fn plus_perf8([*]usize) *usize;
+pub extern fn zero_perform([*]usize) *usize;
+pub extern fn zero_perf8([*]usize) *usize;
+pub extern fn copy_perform([*]usize) *usize;
+pub extern fn copy_perf8([*]usize) *usize;
+pub extern fn scalarcopy_perform([*]usize) *usize;
+pub extern fn scalarcopy_perf8([*]usize) *usize;
 
+
+extern fn mayer_fht([*]Sample, u32) void;
+extern fn mayer_fft(u32, [*]Sample, [*]Sample) void;
+extern fn mayer_ifft(u32, [*]Sample, [*]Sample) void;
+extern fn mayer_realfft(u32, [*]Sample) void;
+extern fn mayer_realifft(u32, [*]Sample) void;
+pub const Mayer = struct {
+	pub const fht = mayer_fht;
+	pub const fft = mayer_fft;
+	pub const ifft = mayer_ifft;
+	pub const realfft = mayer_realfft;
+	pub const realifft = mayer_realifft;
+};
 pub extern fn pd_fft([*]Float, u32, u32) void;
-pub extern fn ilog2(u32) u32;
-pub extern fn mayer_fht([*]Sample, u32) void;
-pub extern fn mayer_fft(u32, [*]Sample, [*]Sample) void;
-pub extern fn mayer_ifft(u32, [*]Sample, [*]Sample) void;
-pub extern fn mayer_realfft(u32, [*]Sample) void;
-pub extern fn mayer_realifft(u32, [*]Sample) void;
+
+
 pub extern var cos_table: [*]f32;
+
+pub fn ulog2(n: u64) u6 {
+	var i = n;
+	var r: u6 = 0;
+	while (i > 1) : ({ r += 1; i >>= 1; }) {}
+	return r;
+}
+
+pub inline fn floatPassive(fp: *Float, av: []Atom, i: usize) void {
+	if (i < av.len and av[i].type == AtomType.FLOAT) {
+		fp.* = av[i].w.float;
+	}
+}
 
 pub extern fn mtof(Float) Float;
 pub extern fn ftom(Float) Float;
@@ -792,11 +834,11 @@ pub extern fn q8_rsqrt(Float) Float;
 pub extern fn qsqrt(Float) Float;
 pub extern fn qrsqrt(Float) Float;
 
-pub const GuiCallbackFn = ?*const fn (*GObj, ?*GList) callconv(.C) void;
+pub const GuiCallbackFn = ?*const fn (*GObj, ?*GList) void;
 pub extern fn gfxstub_deleteforkey(?*anyopaque) void;
 pub extern fn pdgui_vmess([*]const u8, [*]const u8, ...) void;
 pub extern fn pdgui_stub_deleteforkey(?*anyopaque) void;
-pub extern fn c_extern(*Pd, NewMethod, Method, *Symbol, usize, c_int, u32, ...) void;
+pub extern fn c_extern(*Pd, NewMethod, Method, *Symbol, usize, i32, u32, ...) void;
 pub extern fn c_addmess(Method, *Symbol, u32, ...) void;
 
 
@@ -842,15 +884,11 @@ pub const MAXPDARG: u32 = 5;
 pub const MAXLOGSIG: u32 = 32;
 pub const MAXSIGSIZE: u32 = 1 << MAXLOGSIG;
 
-pub const GP_NONE = @as(c_int, 0);
-pub const GP_GLIST = @as(c_int, 1);
-pub const GP_ARRAY = @as(c_int, 2);
-
 pub const LOGCOSTABSIZE: u32 = 9;
 pub const COSTABSIZE: u32 = 1 << LOGCOSTABSIZE;
 
 pub const typedmess = pd_typedmess;
 pub const vmess = pd_vmess;
 pub const PD_USE_TE_XPIX = "";
-pub const PDTHREADS = @as(c_int, 1);
+pub const PDTHREADS: u32 = 1;
 pub const PERTHREAD = "";

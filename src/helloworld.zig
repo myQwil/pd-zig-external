@@ -27,7 +27,7 @@ const HelloWorld = extern struct {
 		return self;
 	}
 
-	fn setup() void {
+	inline fn setup() void {
 		class = pd.class(pd.symbol("helloworld"), @ptrCast(&new), null,
 			@sizeOf(Self), pd.Class.DEFAULT, 0);
 		class.addBang(@ptrCast(&bang));
