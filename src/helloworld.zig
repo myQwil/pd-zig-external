@@ -20,11 +20,17 @@ const HelloWorld = extern struct {
 		self.sym = s;
 	}
 
-	fn new() ?*Self {
-		const self: *Self = @ptrCast(class.new() orelse return null);
+	inline fn _new() !*Self {
+		const self: *Self = @ptrCast(class.new() orelse return error.NoSetup);
+		errdefer pd.mem.destroy(self);
+
 		_ = self.obj.outlet(pd.s.float);
 		self.sym = pd.symbol("world");
 		return self;
+	}
+
+	fn new() ?*Self {
+		return _new() catch null;
 	}
 
 	inline fn setup() void {
