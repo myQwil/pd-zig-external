@@ -40,7 +40,9 @@ pub const Atom = extern struct {
 	}
 };
 
-pub const AtomType = struct {
+// variadic functions can't work with enum literals, even if the enum has
+// an explicit tag type, so this enum is really just being used as a namespace.
+pub const AtomType = enum {
 	pub const NULL: u32 = 0;
 	pub const FLOAT: u32 = 1;
 	pub const SYMBOL: u32 = 2;
@@ -206,8 +208,8 @@ pub const Class = extern struct {
 	pub const NOPROMOTESIG: u32 = 0x20;  // don't promote scalars to signals
 	pub const NOPROMOTELEFT: u32 = 0x40; // not even the main (left) inlet
 };
-extern fn class_new(*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
-extern fn class_new64(*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
+extern fn class_new(?*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
+extern fn class_new64(?*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
 pub const class = class_new;
 pub const class64 = class_new64;
 
@@ -252,7 +254,7 @@ extern fn dsp_add_plus([*]Sample, [*]Sample, [*]Sample, u32) void;
 extern fn dsp_add_copy([*]Sample, [*]Sample, u32) void;
 extern fn dsp_add_scalarcopy([*]Float, [*]Sample, u32) void;
 extern fn dsp_add_zero([*]Sample, u32) void;
-pub const Dsp = struct {
+pub const dsp = struct {
 	pub const add = dsp_add;
 	pub const addV = dsp_addv;
 	pub const addPlus = dsp_add_plus;
@@ -380,14 +382,14 @@ fn resize(_: *anyopaque, buf: []u8, _: u8, new_len: usize, _: usize) bool {
 fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
 	freebytes(buf.ptr, buf.len);
 }
-pub const mem = Allocator {
-	.ptr = undefined,
-	.vtable = &mem_vtable,
-};
 const mem_vtable = Allocator.VTable {
 	.alloc = alloc,
 	.resize = resize,
 	.free = free,
+};
+pub const mem = Allocator {
+	.ptr = undefined,
+	.vtable = &mem_vtable,
 };
 
 
@@ -613,7 +615,7 @@ pub const s = struct {
 };
 
 
-// ------------------------------ Static methods -------------------------------
+// ---------------------------------- System -----------------------------------
 // -----------------------------------------------------------------------------
 extern fn sys_getblksize() u32;
 extern fn sys_getsr() Float;
@@ -798,7 +800,7 @@ extern fn mayer_fft(u32, [*]Sample, [*]Sample) void;
 extern fn mayer_ifft(u32, [*]Sample, [*]Sample) void;
 extern fn mayer_realfft(u32, [*]Sample) void;
 extern fn mayer_realifft(u32, [*]Sample) void;
-pub const Mayer = struct {
+pub const mayer = struct {
 	pub const fht = mayer_fht;
 	pub const fft = mayer_fft;
 	pub const ifft = mayer_ifft;
@@ -817,7 +819,7 @@ pub fn ulog2(n: u64) u6 {
 	return r;
 }
 
-pub inline fn floatPassive(fp: *Float, av: []Atom, i: usize) void {
+pub inline fn floatPassive(fp: *Float, av: []const Atom, i: usize) void {
 	if (i < av.len and av[i].type == AtomType.FLOAT) {
 		fp.* = av[i].w.float;
 	}
