@@ -11,30 +11,30 @@ pub const NewMethod = ?*const fn () *anyopaque;
 
 // ----------------------------------- Atom ------------------------------------
 // -----------------------------------------------------------------------------
-extern fn atom_gensym(*const Atom) *Symbol;
-extern fn atom_string(*const Atom, [*]u8, u32) void;
-extern fn atom_getint(*const Atom) Int;
-extern fn atom_getfloat(*const Atom) Float;
-extern fn atom_getsymbol(*const Atom) *Symbol;
-extern fn atom_getintarg(u32, u32, *const Atom) Int;
-extern fn atom_getfloatarg(u32, u32, *const Atom) Float;
-extern fn atom_getsymbolarg(u32, u32, *const Atom) *Symbol;
 pub const Atom = extern struct {
 	type: u32,
 	w: Word,
 
+	extern fn atom_gensym(*const Atom) *Symbol;
 	pub const toSymbol = atom_gensym;
+	extern fn atom_string(*const Atom, [*]u8, u32) void;
 	pub const bufPrint = atom_string;
+	extern fn atom_getint(*const Atom) Int;
 	pub const int = atom_getint;
+	extern fn atom_getfloat(*const Atom) Float;
 	pub const float = atom_getfloat;
+	extern fn atom_getsymbol(*const Atom) *Symbol;
 	pub const symbol = atom_getsymbol;
 
+	extern fn atom_getintarg(u32, u32, *const Atom) Int;
 	pub inline fn intArg(self: *const Atom, which: u32, ac: u32) Int {
 		return atom_getintarg(which, ac, self);
 	}
+	extern fn atom_getfloatarg(u32, u32, *const Atom) Float;
 	pub inline fn floatArg(self: *const Atom, which: u32, ac: u32) Float {
 		return atom_getfloatarg(which, ac, self);
 	}
+	extern fn atom_getsymbolarg(u32, u32, *const Atom) *Symbol;
 	pub inline fn symbolArg(self: *const Atom, which: u32, ac: u32) *Symbol {
 		return atom_getsymbolarg(which, ac, self);
 	}
@@ -61,44 +61,44 @@ pub const AtomType = enum {
 
 // ---------------------------------- BinBuf -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn binbuf_free(*BinBuf) void;
-extern fn binbuf_duplicate(*const BinBuf) *BinBuf;
-extern fn binbuf_text(*BinBuf, [*]const u8, usize) void;
-extern fn binbuf_gettext(*const BinBuf, *[*]u8, *u32) void;
-extern fn binbuf_clear(*BinBuf) void;
-extern fn binbuf_add(*BinBuf, u32, [*]const Atom) void;
-extern fn binbuf_addv(*BinBuf, [*]const u8, ...) void;
-extern fn binbuf_addbinbuf(*BinBuf, *const BinBuf) void;
-extern fn binbuf_addsemi(*BinBuf) void;
-extern fn binbuf_restore(*BinBuf, u32, [*]const Atom) void;
-extern fn binbuf_print(*const BinBuf) void;
-extern fn binbuf_getnatom(*const BinBuf) u32;
-extern fn binbuf_getvec(*const BinBuf) [*]Atom;
-extern fn binbuf_resize(*BinBuf, u32) u32;
-extern fn binbuf_eval(*const BinBuf, *Pd, u32, [*]const Atom) void;
-extern fn binbuf_read(*BinBuf, [*]const u8, [*]const u8, u32) u32;
-extern fn binbuf_read_via_canvas(*BinBuf, [*]const u8, *const GList, u32) u32;
-extern fn binbuf_read_via_path(*BinBuf, [*]const u8, [*]const u8, u32) u32;
-extern fn binbuf_write(*const BinBuf, [*]const u8, [*]const u8, u32) u32;
 pub const BinBuf = opaque {
+	extern fn binbuf_free(*BinBuf) void;
 	pub const free = binbuf_free;
+	extern fn binbuf_duplicate(*const BinBuf) *BinBuf;
 	pub const duplicate = binbuf_duplicate;
+	extern fn binbuf_text(*BinBuf, [*]const u8, usize) void;
 	pub const fromText = binbuf_text;
+	extern fn binbuf_gettext(*const BinBuf, *[*]u8, *u32) void;
 	pub const text = binbuf_gettext;
+	extern fn binbuf_clear(*BinBuf) void;
 	pub const clear = binbuf_clear;
+	extern fn binbuf_add(*BinBuf, u32, [*]const Atom) void;
 	pub const add = binbuf_add;
+	extern fn binbuf_addv(*BinBuf, [*]const u8, ...) void;
 	pub const addV = binbuf_addv;
+	extern fn binbuf_addbinbuf(*BinBuf, *const BinBuf) void;
 	pub const addBinBuf = binbuf_addbinbuf;
+	extern fn binbuf_addsemi(*BinBuf) void;
 	pub const addSemi = binbuf_addsemi;
+	extern fn binbuf_restore(*BinBuf, u32, [*]const Atom) void;
 	pub const restore = binbuf_restore;
+	extern fn binbuf_print(*const BinBuf) void;
 	pub const print = binbuf_print;
+	extern fn binbuf_getnatom(*const BinBuf) u32;
 	pub const nAtoms = binbuf_getnatom;
+	extern fn binbuf_getvec(*const BinBuf) [*]Atom;
 	pub const vec = binbuf_getvec;
+	extern fn binbuf_resize(*BinBuf, u32) u32;
 	pub const resize = binbuf_resize;
+	extern fn binbuf_eval(*const BinBuf, *Pd, u32, [*]const Atom) void;
 	pub const eval = binbuf_eval;
+	extern fn binbuf_read(*BinBuf, [*]const u8, [*]const u8, u32) u32;
 	pub const read = binbuf_read;
+	extern fn binbuf_read_via_canvas(*BinBuf, [*]const u8, *const GList, u32) u32;
 	pub const readViaCanvas = binbuf_read_via_canvas;
+	extern fn binbuf_read_via_path(*BinBuf, [*]const u8, [*]const u8, u32) u32;
 	pub const readViaPath = binbuf_read_via_path;
+	extern fn binbuf_write(*const BinBuf, [*]const u8, [*]const u8, u32) u32;
 	pub const write = binbuf_write;
 };
 extern fn binbuf_new() *BinBuf;
@@ -120,33 +120,10 @@ pub const SymbolMethod = ?*const fn (*Pd, *Symbol) void;
 pub const ListMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) void;
 pub const AnyMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) void;
 
-extern fn class_free(*Class) void;
-extern fn class_addmethod(*Class, Method, *Symbol, u32, ...) void;
-extern fn class_addbang(*Class, Method) void;
-extern fn class_addpointer(*Class, Method) void;
-extern fn class_doaddfloat(*Class, Method) void;
-extern fn class_addsymbol(*Class, Method) void;
-extern fn class_addlist(*Class, Method) void;
-extern fn class_addanything(*Class, Method) void;
-extern fn class_sethelpsymbol(*Class, *Symbol) void;
-extern fn class_setwidget(*Class, ?*const WidgetBehavior) void;
-extern fn class_setparentwidget(*Class, ?*const ParentWidgetBehavior) void;
-extern fn class_getname(*const Class) [*]const u8;
-extern fn class_gethelpname(*const Class) [*]const u8;
-extern fn class_gethelpdir(*const Class) [*]const u8;
-extern fn class_setdrawcommand(*Class) void;
-extern fn class_isdrawcommand(*const Class) i32;
-extern fn class_domainsignalin(*Class, i32) void;
 pub const SaveFn = ?*const fn (*GObj, ?*BinBuf) void;
-extern fn class_setsavefn(*Class, SaveFn) void;
-extern fn class_getsavefn(*const Class) SaveFn;
 pub const PropertiesFn = ?*const fn (*GObj, *GList) void;
-extern fn class_setpropertiesfn(*Class, PropertiesFn) void;
-extern fn class_getpropertiesfn(*const Class) PropertiesFn;
 pub const ClassFreeFn = ?*const fn (*Class) void;
-extern fn class_setfreefn(*Class, ClassFreeFn) void;
-extern fn pd_new(*Class) ?*Pd;
-extern fn pd_findbyclass(*Symbol, *const Class) ?*Pd;
+
 pub const Class = extern struct {
 	name: *Symbol,
 	helpname: *Symbol,
@@ -170,30 +147,54 @@ pub const Class = extern struct {
 	flags: u8,
 	classfreefn: ClassFreeFn,
 
+	extern fn class_free(*Class) void;
 	pub const free = class_free;
+	extern fn class_addmethod(*Class, Method, *Symbol, u32, ...) void;
 	pub const addMethod = class_addmethod;
+	extern fn class_addbang(*Class, Method) void;
 	pub const addBang = class_addbang;
+	extern fn class_addpointer(*Class, Method) void;
 	pub const addPointer = class_addpointer;
+	extern fn class_doaddfloat(*Class, Method) void;
 	pub const addFloat = class_doaddfloat;
+	extern fn class_addsymbol(*Class, Method) void;
 	pub const addSymbol = class_addsymbol;
+	extern fn class_addlist(*Class, Method) void;
 	pub const addList = class_addlist;
+	extern fn class_addanything(*Class, Method) void;
 	pub const addAnything = class_addanything;
+	extern fn class_sethelpsymbol(*Class, *Symbol) void;
 	pub const setHelpSymbol = class_sethelpsymbol;
+	extern fn class_setwidget(*Class, ?*const WidgetBehavior) void;
 	pub const setWidget = class_setwidget;
+	extern fn class_setparentwidget(*Class, ?*const ParentWidgetBehavior) void;
 	pub const setParentWidget = class_setparentwidget;
+	extern fn class_getname(*const Class) [*]const u8;
 	pub const name = class_getname;
+	extern fn class_gethelpname(*const Class) [*]const u8;
 	pub const helpName = class_gethelpname;
+	extern fn class_gethelpdir(*const Class) [*]const u8;
 	pub const helpDir = class_gethelpdir;
+	extern fn class_setdrawcommand(*Class) void;
 	pub const setDrawCommand = class_setdrawcommand;
+	extern fn class_isdrawcommand(*const Class) i32;
 	pub const isDrawCommand = class_isdrawcommand;
+	extern fn class_domainsignalin(*Class, i32) void;
 	pub const doMainSignalIn = class_domainsignalin;
+	extern fn class_setsavefn(*Class, SaveFn) void;
 	pub const setSaveFn = class_setsavefn;
+	extern fn class_getsavefn(*const Class) SaveFn;
 	pub const saveFn = class_getsavefn;
+	extern fn class_setpropertiesfn(*Class, PropertiesFn) void;
 	pub const setPropertiesFn = class_setpropertiesfn;
+	extern fn class_getpropertiesfn(*const Class) PropertiesFn;
 	pub const propertiesFn = class_getpropertiesfn;
+	extern fn class_setfreefn(*Class, ClassFreeFn) void;
 	pub const setFreeFn = class_setfreefn;
+	extern fn pd_new(*Class) ?*Pd;
 	pub const new = pd_new;
 
+	extern fn pd_findbyclass(*Symbol, *const Class) ?*Pd;
 	pub inline fn find(self: *const Class, sym: *Symbol) ?*Pd {
 		return pd_findbyclass(sym, self);
 	}
@@ -209,8 +210,8 @@ pub const Class = extern struct {
 	pub const NOPROMOTELEFT: u32 = 0x40; // not even the main (left) inlet
 };
 extern fn class_new(?*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
-extern fn class_new64(?*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
 pub const class = class_new;
+extern fn class_new64(?*Symbol, NewMethod, Method, usize, u32, u32, ...) *Class;
 pub const class64 = class_new64;
 
 pub extern const garray_class: *Class;
@@ -220,116 +221,114 @@ pub extern const glob_pdobject: *Class;
 
 // ----------------------------------- Clock -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn clock_set(*Clock, f64) void;
-extern fn clock_delay(*Clock, f64) void;
-extern fn clock_unset(*Clock) void;
-extern fn clock_setunit(*Clock, f64, u32) void;
-extern fn clock_free(*Clock) void;
 pub const Clock = opaque {
+	extern fn clock_set(*Clock, f64) void;
 	pub const set = clock_set;
+	extern fn clock_delay(*Clock, f64) void;
 	pub const delay = clock_delay;
+	extern fn clock_unset(*Clock) void;
 	pub const unset = clock_unset;
+	extern fn clock_setunit(*Clock, f64, u32) void;
 	pub const setUnit = clock_setunit;
+	extern fn clock_free(*Clock) void;
 	pub const free = clock_free;
 };
 extern fn clock_new(*anyopaque, Method) *Clock;
-extern fn clock_getlogicaltime() f64;
-extern fn clock_getsystime() f64;
-extern fn clock_gettimesince(f64) f64;
-extern fn clock_gettimesincewithunits(f64, f64, u32) f64;
-extern fn clock_getsystimeafter(f64) f64;
 pub const clock = clock_new;
+extern fn clock_getlogicaltime() f64;
 pub const logicalTime = clock_getlogicaltime;
+extern fn clock_getsystime() f64;
 pub const sysTime = clock_getsystime;
+extern fn clock_gettimesince(f64) f64;
 pub const timeSince = clock_gettimesince;
+extern fn clock_gettimesincewithunits(f64, f64, u32) f64;
 pub const timeSinceWithUnits = clock_gettimesincewithunits;
+extern fn clock_getsystimeafter(f64) f64;
 pub const sysTimeAfter = clock_getsystimeafter;
 
 
 // ------------------------------------ Dsp ------------------------------------
 // -----------------------------------------------------------------------------
-extern fn dsp_add(PerfRoutine, u32, ...) void;
-extern fn dsp_addv(PerfRoutine, u32, [*]Int) void;
-extern fn dsp_add_plus([*]Sample, [*]Sample, [*]Sample, u32) void;
-extern fn dsp_add_copy([*]Sample, [*]Sample, u32) void;
-extern fn dsp_add_scalarcopy([*]Float, [*]Sample, u32) void;
-extern fn dsp_add_zero([*]Sample, u32) void;
 pub const dsp = struct {
+	extern fn dsp_add(PerfRoutine, u32, ...) void;
 	pub const add = dsp_add;
+	extern fn dsp_addv(PerfRoutine, u32, [*]Int) void;
 	pub const addV = dsp_addv;
+	extern fn dsp_add_plus([*]Sample, [*]Sample, [*]Sample, u32) void;
 	pub const addPlus = dsp_add_plus;
+	extern fn dsp_add_copy([*]Sample, [*]Sample, u32) void;
 	pub const addCopy = dsp_add_copy;
+	extern fn dsp_add_scalarcopy([*]Float, [*]Sample, u32) void;
 	pub const addScalarCopy = dsp_add_scalarcopy;
+	extern fn dsp_add_zero([*]Sample, u32) void;
 	pub const addZero = dsp_add_zero;
 };
 
 
 // ---------------------------------- GArray -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn garray_getfloatarray(*GArray, *u32, *[*]Float) u32;
-extern fn garray_getfloatwords(*GArray, *u32, *[*]Word) u32;
-extern fn garray_redraw(*GArray) void;
-extern fn garray_npoints(*GArray) u32;
-extern fn garray_vec(*GArray) [*]u8;
-extern fn garray_resize(*GArray, Float) void;
-extern fn garray_resize_long(*GArray, i64) void;
-extern fn garray_usedindsp(*GArray) void;
-extern fn garray_setsaveit(*GArray, i32) void;
-extern fn garray_getglist(*GArray) *GList;
-extern fn garray_getarray(*GArray) ?*Array;
 pub const GArray = opaque {
+	extern fn garray_getfloatarray(*GArray, *u32, *[*]Float) u32;
 	pub const floatArray = garray_getfloatarray;
+	extern fn garray_redraw(*GArray) void;
 	pub const redraw = garray_redraw;
+	extern fn garray_npoints(*GArray) u32;
 	pub const nPoints = garray_npoints;
+	extern fn garray_vec(*GArray) [*]u8;
 	pub const vec = garray_vec;
+	extern fn garray_resize(*GArray, Float) void;
 	pub const resize = garray_resize;
+	extern fn garray_resize_long(*GArray, i64) void;
 	pub const resizeLong = garray_resize_long;
+	extern fn garray_usedindsp(*GArray) void;
 	pub const useInDsp = garray_usedindsp;
+	extern fn garray_setsaveit(*GArray, i32) void;
 	pub const setSaveIt = garray_setsaveit;
+	extern fn garray_getglist(*GArray) *GList;
 	pub const glist = garray_getglist;
+	extern fn garray_getarray(*GArray) ?*Array;
 	pub const array = garray_getarray;
 
+	extern fn garray_getfloatwords(*GArray, *u32, *[*]Word) u32;
 	pub fn floatWords(self: *GArray) ?[]Word {
 		var len: u32 = undefined;
-		var wp: [*]Word = undefined;
-		return if (garray_getfloatwords(self, &len, &wp) != 0) wp[0..len] else null;
+		var ptr: [*]Word = undefined;
+		return if (garray_getfloatwords(self, &len, &ptr) != 0) ptr[0..len] else null;
 	}
 };
 
 
 // ----------------------------------- GList -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn canvas_makefilename(*const GList, [*]const u8, [*]u8, u32) void;
-extern fn canvas_getdir(*const GList) *Symbol;
-extern fn canvas_dataproperties(*GList, *Scalar, *BinBuf) void;
-extern fn canvas_open(*const GList, [*]const u8, [*]const u8, [*]u8, *[*]u8, u32, u32) i32;
-extern fn canvas_getsr(*GList) Float;
-extern fn canvas_getsignallength(*GList) u32;
-extern fn pd_undo_set_objectstate(*GList, *Pd, *Symbol, u32, [*]Atom, u32, [*]Atom) void;
-extern fn canvas_setargs(u32, [*]const Atom) void;
-extern fn canvas_getargs(*u32, *[*]Atom) void;
-extern fn canvas_getcurrent() ?*GList;
 pub const GList = opaque {
+	extern fn canvas_makefilename(*const GList, [*]const u8, [*]u8, u32) void;
 	pub const makeFilename = canvas_makefilename;
+	extern fn canvas_getdir(*const GList) *Symbol;
 	pub const dir = canvas_getdir;
+	extern fn canvas_dataproperties(*GList, *Scalar, *BinBuf) void;
 	pub const dataProperties = canvas_dataproperties;
+	extern fn canvas_open(
+		*const GList, [*]const u8, [*]const u8, [*]u8, *[*]u8, u32, u32) i32;
 	pub const open = canvas_open;
+	extern fn canvas_getsr(*GList) Float;
 	pub const sampleRate = canvas_getsr;
+	extern fn canvas_getsignallength(*GList) u32;
 	pub const signalLength = canvas_getsignallength;
+	extern fn pd_undo_set_objectstate(
+		*GList, *Pd, *Symbol, u32, [*]Atom, u32, [*]Atom) void;
 	pub const undoSetState = pd_undo_set_objectstate;
 	// static methods
+	extern fn canvas_setargs(u32, [*]const Atom) void;
 	pub const setArgs = canvas_setargs;
+	extern fn canvas_getargs(*u32, *[*]Atom) void;
 	pub const args = canvas_getargs;
+	extern fn canvas_getcurrent() ?*GList;
 	pub const current = canvas_getcurrent;
 };
 
 
 // --------------------------------- GPointer ----------------------------------
 // -----------------------------------------------------------------------------
-extern fn gpointer_init(*GPointer) void;
-extern fn gpointer_copy(*const GPointer, *GPointer) void;
-extern fn gpointer_unset(*GPointer) void;
-extern fn gpointer_check(*const GPointer, u32) u32;
 pub const GPointer = extern struct {
 	un: extern union {
 		scalar: *Scalar,
@@ -338,16 +337,19 @@ pub const GPointer = extern struct {
 	valid: i32,
 	stub: *GStub,
 
+	extern fn gpointer_init(*GPointer) void;
 	pub const init = gpointer_init;
+	extern fn gpointer_copy(*const GPointer, *GPointer) void;
 	pub const copy = gpointer_copy;
+	extern fn gpointer_unset(*GPointer) void;
 	pub const unset = gpointer_unset;
+	extern fn gpointer_check(*const GPointer, u32) u32;
 	pub const check = gpointer_check;
 };
 
 
 // ----------------------------------- Inlet -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn inlet_free(*Inlet) void;
 pub const Inlet = extern struct {
 	pd: Pd,
 	next: ?*Inlet,
@@ -362,6 +364,7 @@ pub const Inlet = extern struct {
 		floatsignalvalue: Float,
 	},
 
+	extern fn inlet_free(*Inlet) void;
 	pub const free = inlet_free;
 };
 
@@ -370,18 +373,22 @@ pub const Inlet = extern struct {
 // -----------------------------------------------------------------------------
 const Allocator = @import("std").mem.Allocator;
 const assert = @import("std").debug.assert;
+
 extern fn getbytes(usize) ?[*]u8;
-extern fn freebytes(*anyopaque, usize) void;
 fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
 	assert(len > 0);
 	return getbytes(len);
 }
+
 fn resize(_: *anyopaque, buf: []u8, _: u8, new_len: usize, _: usize) bool {
 	return (new_len <= buf.len);
 }
+
+extern fn freebytes(*anyopaque, usize) void;
 fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
 	freebytes(buf.ptr, buf.len);
 }
+
 const mem_vtable = Allocator.VTable {
 	.alloc = alloc,
 	.resize = resize,
@@ -395,14 +402,6 @@ pub const mem = Allocator {
 
 // ---------------------------------- Object -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn obj_list(*Object, *Symbol, u32, [*]Atom) void;
-extern fn obj_saveformat(*const Object, ?*BinBuf) void;
-extern fn outlet_new(*Object, *Symbol) *Outlet;
-extern fn inlet_new(*Object, *Pd, ?*Symbol, ?*Symbol) *Inlet;
-extern fn pointerinlet_new(*Object, *GPointer) *Inlet;
-extern fn floatinlet_new(*Object, *Float) *Inlet;
-extern fn symbolinlet_new(*Object, **Symbol) *Inlet;
-extern fn signalinlet_new(*Object, Float) *Inlet;
 pub const Object = extern struct {
 	g: GObj,
 	binbuf: *BinBuf,
@@ -418,13 +417,21 @@ pub const Object = extern struct {
 		atom = 3,
 	},
 
+	extern fn obj_list(*Object, *Symbol, u32, [*]Atom) void;
 	pub const list = obj_list;
+	extern fn obj_saveformat(*const Object, ?*BinBuf) void;
 	pub const saveFormat = obj_saveformat;
+	extern fn outlet_new(*Object, *Symbol) *Outlet;
 	pub const outlet = outlet_new;
+	extern fn inlet_new(*Object, *Pd, ?*Symbol, ?*Symbol) *Inlet;
 	pub const inlet = inlet_new;
+	extern fn pointerinlet_new(*Object, *GPointer) *Inlet;
 	pub const inletPointer = pointerinlet_new;
+	extern fn floatinlet_new(*Object, *Float) *Inlet;
 	pub const inletFloat = floatinlet_new;
+	extern fn symbolinlet_new(*Object, **Symbol) *Inlet;
 	pub const inletSymbol = symbolinlet_new;
+	extern fn signalinlet_new(*Object, Float) *Inlet;
 	pub const inletSignal = signalinlet_new;
 
 	pub inline fn inletFloatArg(obj: *Object, fp: *Float, av: []const Atom, i: usize)
@@ -444,83 +451,78 @@ pub const Object = extern struct {
 
 // ---------------------------------- Outlet -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn outlet_bang(*Outlet) void;
-extern fn outlet_pointer(*Outlet, *GPointer) void;
-extern fn outlet_float(*Outlet, Float) void;
-extern fn outlet_symbol(*Outlet, *Symbol) void;
-extern fn outlet_list(*Outlet, *Symbol, u32, [*]Atom) void;
-extern fn outlet_anything(*Outlet, *Symbol, u32, [*]Atom) void;
-extern fn outlet_getsymbol(*Outlet) *Symbol;
-extern fn outlet_free(*Outlet) void;
 pub const Outlet = opaque {
+	extern fn outlet_bang(*Outlet) void;
 	pub const bang = outlet_bang;
+	extern fn outlet_pointer(*Outlet, *GPointer) void;
 	pub const pointer = outlet_pointer;
+	extern fn outlet_float(*Outlet, Float) void;
 	pub const float = outlet_float;
+	extern fn outlet_symbol(*Outlet, *Symbol) void;
 	pub const symbol = outlet_symbol;
+	extern fn outlet_list(*Outlet, ?*Symbol, u32, [*]Atom) void;
 	pub const list = outlet_list;
+	extern fn outlet_anything(*Outlet, *Symbol, u32, [*]Atom) void;
 	pub const anything = outlet_anything;
+	extern fn outlet_getsymbol(*Outlet) *Symbol;
 	pub const toSymbol = outlet_getsymbol;
+	extern fn outlet_free(*Outlet) void;
 	pub const free = outlet_free;
 };
 
 
 // ------------------------------------ Pd -------------------------------------
 // -----------------------------------------------------------------------------
-extern fn pd_free(*Pd) void;
-extern fn pd_bind(*Pd, *Symbol) void;
-extern fn pd_unbind(*Pd, *Symbol) void;
-extern fn pd_pushsym(*Pd) void;
-extern fn pd_popsym(*Pd) void;
-extern fn pd_bang(*Pd) void;
-extern fn pd_pointer(*Pd, *GPointer) void;
-extern fn pd_float(*Pd, Float) void;
-extern fn pd_symbol(*Pd, *Symbol) void;
-extern fn pd_list(*Pd, *Symbol, u32, [*]Atom) void;
-extern fn pd_anything(*Pd, *Symbol, u32, [*]Atom) void;
-extern fn pd_vmess(*Pd, *Symbol, [*]const u8, ...) void;
-extern fn pd_typedmess(*Pd, *Symbol, u32, [*]Atom) void;
-extern fn pd_forwardmess(*Pd, u32, [*]Atom) void;
-extern fn pd_checkobject(*Pd) ?*Object;
-extern fn pd_getparentwidget(*Pd) ?*const ParentWidgetBehavior;
-extern fn gfxstub_new(*Pd, ?*anyopaque, [*]const u8) void;
-extern fn pdgui_stub_vnew(*Pd, [*]const u8, ?*anyopaque, [*]const u8, ...) void;
-extern fn getfn(*const Pd, *Symbol) GotFn;
-extern fn zgetfn(*const Pd, *Symbol) GotFn;
-extern fn pd_newest() *Pd;
 pub const Pd = extern struct {
 	_: *Class,
 
+	extern fn pd_free(*Pd) void;
 	pub const free = pd_free;
+	extern fn pd_bind(*Pd, *Symbol) void;
 	pub const bind = pd_bind;
+	extern fn pd_unbind(*Pd, *Symbol) void;
 	pub const unbind = pd_unbind;
+	extern fn pd_pushsym(*Pd) void;
 	pub const pushSymbol = pd_pushsym;
+	extern fn pd_popsym(*Pd) void;
 	pub const popSymbol = pd_popsym;
+	extern fn pd_bang(*Pd) void;
 	pub const bang = pd_bang;
+	extern fn pd_pointer(*Pd, *GPointer) void;
 	pub const pointer = pd_pointer;
+	extern fn pd_float(*Pd, Float) void;
 	pub const float = pd_float;
+	extern fn pd_symbol(*Pd, *Symbol) void;
 	pub const symbol = pd_symbol;
+	extern fn pd_list(*Pd, *Symbol, u32, [*]Atom) void;
 	pub const list = pd_list;
+	extern fn pd_anything(*Pd, *Symbol, u32, [*]Atom) void;
 	pub const anything = pd_anything;
+	extern fn pd_vmess(*Pd, *Symbol, [*]const u8, ...) void;
 	pub const vMess = pd_vmess;
+	extern fn pd_typedmess(*Pd, *Symbol, u32, [*]Atom) void;
 	pub const typedMess = pd_typedmess;
+	extern fn pd_forwardmess(*Pd, u32, [*]Atom) void;
 	pub const forwardMess = pd_forwardmess;
+	extern fn pd_checkobject(*Pd) ?*Object;
 	pub const checkObject = pd_checkobject;
+	extern fn pd_getparentwidget(*Pd) ?*const ParentWidgetBehavior;
 	pub const parentWidget = pd_getparentwidget;
+	extern fn gfxstub_new(*Pd, ?*anyopaque, [*]const u8) void;
 	pub const gfxStub = gfxstub_new;
+	extern fn pdgui_stub_vnew(*Pd, [*]const u8, ?*anyopaque, [*]const u8, ...) void;
 	pub const guiStub = pdgui_stub_vnew;
+	extern fn getfn(*const Pd, *Symbol) GotFn;
 	pub const func = getfn;
+	extern fn zgetfn(*const Pd, *Symbol) GotFn;
 	pub const zFunc = zgetfn;
+	extern fn pd_newest() *Pd;
 	pub const newest = pd_newest; // static
 };
 
 
 // --------------------------------- Resample ----------------------------------
 // -----------------------------------------------------------------------------
-extern fn resample_init(*Resample) void;
-extern fn resample_free(*Resample) void;
-extern fn resample_dsp(*Resample, [*]Sample, u32, [*]Sample, u32, u32) void;
-extern fn resamplefrom_dsp(*Resample, [*]Sample, u32, u32, u32) void;
-extern fn resampleto_dsp(*Resample, [*]Sample, u32, u32, u32) void;
 pub const Resample = extern struct {
 	method: i32,
 	downsample: i32,
@@ -532,10 +534,15 @@ pub const Resample = extern struct {
 	buffer: [*]Sample,
 	bufsize: u32,
 
+	extern fn resample_init(*Resample) void;
 	pub const init = resample_init;
+	extern fn resample_free(*Resample) void;
 	pub const free = resample_free;
+	extern fn resample_dsp(*Resample, [*]Sample, u32, [*]Sample, u32, u32) void;
 	pub const dsp = resample_dsp;
+	extern fn resamplefrom_dsp(*Resample, [*]Sample, u32, u32, u32) void;
 	pub const fromDsp = resamplefrom_dsp;
+	extern fn resampleto_dsp(*Resample, [*]Sample, u32, u32, u32) void;
 	pub const toDsp = resampleto_dsp;
 };
 
@@ -557,60 +564,60 @@ pub const Signal = extern struct {
 	nalloc: i32,
 };
 extern fn signal_new(u32, u32, Float, [*]Sample) *Signal;
-extern fn signal_setmultiout(*[*]Signal, u32) void;
 pub const signal = signal_new;
+extern fn signal_setmultiout(*[*]Signal, u32) void;
 pub const setMultiOut = signal_setmultiout;
 
 
 // ---------------------------------- Symbol -----------------------------------
 // -----------------------------------------------------------------------------
-extern fn class_set_extern_dir(*Symbol) void;
-extern fn text_getbufbyname(*Symbol) ?*BinBuf;
-extern fn text_notifybyname(*Symbol) void;
-extern fn value_get(*Symbol) *Float;
-extern fn value_release(*Symbol) void;
-extern fn value_getfloat(*Symbol, *Float) u32;
-extern fn value_setfloat(*Symbol, Float) u32;
 pub const Symbol = extern struct {
 	name: [*:0]const u8,
 	thing: ?*Pd,
 	next: ?*Symbol,
 
+	extern fn class_set_extern_dir(*Symbol) void;
 	pub const setExternDir = class_set_extern_dir;
+	extern fn text_getbufbyname(*Symbol) ?*BinBuf;
 	pub const buf = text_getbufbyname;
+	extern fn text_notifybyname(*Symbol) void;
 	pub const notify = text_notifybyname;
+	extern fn value_get(*Symbol) *Float;
 	pub const val = value_get;
+	extern fn value_release(*Symbol) void;
 	pub const releaseVal = value_release;
+	extern fn value_getfloat(*Symbol, *Float) u32;
 	pub const float = value_getfloat;
+	extern fn value_setfloat(*Symbol, Float) u32;
 	pub const setFloat = value_setfloat;
 };
 extern fn gensym([*]const u8) *Symbol;
 pub const symbol = gensym;
 
-extern var s_pointer: Symbol;
-extern var s_float: Symbol;
-extern var s_symbol: Symbol;
-extern var s_bang: Symbol;
-extern var s_list: Symbol;
-extern var s_anything: Symbol;
-extern var s_signal: Symbol;
-extern var s__N: Symbol;
-extern var s__X: Symbol;
-extern var s_x: Symbol;
-extern var s_y: Symbol;
-extern var s_: Symbol;
 pub const s = struct {
+	extern var s_pointer: Symbol;
 	pub const pointer = &s_pointer;
+	extern var s_float: Symbol;
 	pub const float = &s_float;
+	extern var s_symbol: Symbol;
 	pub const symbol = &s_symbol;
+	extern var s_bang: Symbol;
 	pub const bang = &s_bang;
+	extern var s_list: Symbol;
 	pub const list = &s_list;
+	extern var s_anything: Symbol;
 	pub const anything = &s_anything;
+	extern var s_signal: Symbol;
 	pub const signal = &s_signal;
+	extern var s__N: Symbol;
 	pub const _N = &s__N;
+	extern var s__X: Symbol;
 	pub const _X = &s__X;
+	extern var s_x: Symbol;
 	pub const x = &s_x;
+	extern var s_y: Symbol;
 	pub const y = &s_y;
+	extern var s_: Symbol;
 	pub const _ = &s_;
 };
 
@@ -618,84 +625,87 @@ pub const s = struct {
 // ---------------------------------- System -----------------------------------
 // -----------------------------------------------------------------------------
 extern fn sys_getblksize() u32;
-extern fn sys_getsr() Float;
-extern fn sys_get_inchannels() u32;
-extern fn sys_get_outchannels() u32;
-extern fn sys_vgui([*]const u8, ...) void;
-extern fn sys_gui([*]const u8) void;
-extern fn sys_pretendguibytes(i32) void;
-extern fn sys_queuegui(?*anyopaque, ?*GList, GuiCallbackFn) void;
-extern fn sys_unqueuegui(?*anyopaque) void;
-extern fn sys_getversion(*i32, *i32, *i32) void;
-extern fn sys_getfloatsize() u32;
-extern fn sys_getrealtime() f64;
-extern fn sys_open([*]const u8, i32, ...) i32;
-extern fn sys_close(i32) i32;
-// extern fn sys_fopen([*]const u8, [*]const u8) *FILE;
-// extern fn sys_fclose(*FILE) i32;
-extern fn sys_lock() void;
-extern fn sys_unlock() void;
-extern fn sys_trylock() i32;
-extern fn sys_isabsolutepath([*]const u8) i32;
-extern fn sys_bashfilename([*]const u8, [*]u8) void;
-extern fn sys_unbashfilename([*]const u8, [*]u8) void;
-extern fn sys_hostfontsize(i32, i32) i32;
-extern fn sys_zoomfontwidth(i32, i32, i32) i32;
-extern fn sys_zoomfontheight(i32, i32, i32) i32;
-extern fn sys_fontwidth(i32) i32;
-extern fn sys_fontheight(i32) i32;
 pub const blockSize = sys_getblksize;
+extern fn sys_getsr() Float;
 pub const sampleRate = sys_getsr;
+extern fn sys_get_inchannels() u32;
 pub const inChannels = sys_get_inchannels;
+extern fn sys_get_outchannels() u32;
 pub const outChannels = sys_get_outchannels;
+extern fn sys_vgui([*]const u8, ...) void;
 pub const vgui = sys_vgui;
+extern fn sys_gui([*]const u8) void;
 pub const gui = sys_gui;
+extern fn sys_pretendguibytes(i32) void;
 pub const pretendGuiBytes = sys_pretendguibytes;
+extern fn sys_queuegui(?*anyopaque, ?*GList, GuiCallbackFn) void;
 pub const queueGui = sys_queuegui;
+extern fn sys_unqueuegui(?*anyopaque) void;
 pub const unqueueGui = sys_unqueuegui;
+extern fn sys_getversion(*i32, *i32, *i32) void;
 pub const version = sys_getversion;
+extern fn sys_getfloatsize() u32;
 pub const floatSize = sys_getfloatsize;
+extern fn sys_getrealtime() f64;
 pub const realTime = sys_getrealtime;
+extern fn sys_open([*]const u8, i32, ...) i32;
 pub const open = sys_open;
+extern fn sys_close(i32) i32;
 pub const close = sys_close;
+// extern fn sys_fopen([*]const u8, [*]const u8) *FILE;
 // pub const fopen = sys_fopen;
+// extern fn sys_fclose(*FILE) i32;
 // pub const fclose = sys_fclose;
+extern fn sys_lock() void;
 pub const lock = sys_lock;
+extern fn sys_unlock() void;
 pub const unlock = sys_unlock;
+extern fn sys_trylock() i32;
 pub const tryLock = sys_trylock;
+extern fn sys_isabsolutepath([*]const u8) i32;
 pub const isAbsolutePath = sys_isabsolutepath;
+extern fn sys_bashfilename([*]const u8, [*]u8) void;
 pub const bashFilename = sys_bashfilename;
+extern fn sys_unbashfilename([*]const u8, [*]u8) void;
 pub const unbashFilename = sys_unbashfilename;
+extern fn sys_hostfontsize(i32, i32) i32;
 pub const hostFontSize = sys_hostfontsize;
+extern fn sys_zoomfontwidth(i32, i32, i32) i32;
 pub const zoomFontWidth = sys_zoomfontwidth;
+extern fn sys_zoomfontheight(i32, i32, i32) i32;
 pub const zoomFontHeight = sys_zoomfontheight;
+extern fn sys_fontwidth(i32) i32;
 pub const fontWidth = sys_fontwidth;
+extern fn sys_fontheight(i32) i32;
 pub const fontHeight = sys_fontheight;
 
 extern fn class_addcreator(NewMethod, *Symbol, u32, ...) void;
 pub const addCreator = class_addcreator;
 
 extern fn binbuf_evalfile(*Symbol, *Symbol) void;
-extern fn binbuf_realizedollsym(*Symbol, u32, [*]const Atom, u32) *Symbol;
 pub const evalFile = binbuf_evalfile;
+extern fn binbuf_realizedollsym(*Symbol, u32, [*]const Atom, u32) *Symbol;
 pub const realizeDollSym = binbuf_realizedollsym;
 
 extern fn canvas_getcurrentdir() *Symbol;
-extern fn canvas_suspend_dsp() i32;
-extern fn canvas_resume_dsp(i32) void;
-extern fn canvas_update_dsp() void;
 pub const currentDir = canvas_getcurrentdir;
+extern fn canvas_suspend_dsp() i32;
 pub const suspendDsp = canvas_suspend_dsp;
+extern fn canvas_resume_dsp(i32) void;
 pub const resumeDsp = canvas_resume_dsp;
+extern fn canvas_update_dsp() void;
 pub const updateDsp = canvas_update_dsp;
 
 extern fn pd_getcanvaslist() ?*GList;
-extern fn pd_getdspstate() i32;
 pub const canvasList = pd_getcanvaslist;
+extern fn pd_getdspstate() i32;
 pub const dspState = pd_getdspstate;
 
 extern fn pd_error(?*const anyopaque, [*]const u8, ...) void;
 pub const err = pd_error;
+
+extern fn glob_setfilename(?*anyopaque, *Symbol, *Symbol) void;
+pub const setFileName = glob_setfilename;
 
 // ----------------------------------- Misc. -----------------------------------
 // -----------------------------------------------------------------------------
@@ -748,9 +758,8 @@ pub const GotFn4 = ?*const fn (
 pub const GotFn5 = ?*const fn (
 	*anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque, *anyopaque) void;
 
-pub extern fn nullfn() void;
-
-pub extern fn glob_setfilename(?*anyopaque, *Symbol, *Symbol) void;
+extern fn nullfn() void;
+pub const nullFn = nullfn;
 
 pub const sys_font: [*]u8 = @extern([*]u8, .{
 	.name = "sys_font",
@@ -795,16 +804,16 @@ pub extern fn scalarcopy_perform([*]usize) *usize;
 pub extern fn scalarcopy_perf8([*]usize) *usize;
 
 
-extern fn mayer_fht([*]Sample, u32) void;
-extern fn mayer_fft(u32, [*]Sample, [*]Sample) void;
-extern fn mayer_ifft(u32, [*]Sample, [*]Sample) void;
-extern fn mayer_realfft(u32, [*]Sample) void;
-extern fn mayer_realifft(u32, [*]Sample) void;
 pub const mayer = struct {
+	extern fn mayer_fht([*]Sample, u32) void;
 	pub const fht = mayer_fht;
+	extern fn mayer_fft(u32, [*]Sample, [*]Sample) void;
 	pub const fft = mayer_fft;
+	extern fn mayer_ifft(u32, [*]Sample, [*]Sample) void;
 	pub const ifft = mayer_ifft;
+	extern fn mayer_realfft(u32, [*]Sample) void;
 	pub const realfft = mayer_realfft;
+	extern fn mayer_realifft(u32, [*]Sample) void;
 	pub const realifft = mayer_realifft;
 };
 pub extern fn pd_fft([*]Float, u32, u32) void;
@@ -889,8 +898,6 @@ pub const MAXSIGSIZE: u32 = 1 << MAXLOGSIG;
 pub const LOGCOSTABSIZE: u32 = 9;
 pub const COSTABSIZE: u32 = 1 << LOGCOSTABSIZE;
 
-pub const typedmess = pd_typedmess;
-pub const vmess = pd_vmess;
 pub const PD_USE_TE_XPIX = "";
 pub const PDTHREADS: u32 = 1;
 pub const PERTHREAD = "";

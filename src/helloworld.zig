@@ -1,6 +1,5 @@
 const pd = @import("pd.zig");
 
-// -------------------------------- hello world --------------------------------
 const HelloWorld = extern struct {
 	const Self = @This();
 	var class: *pd.Class = undefined;
