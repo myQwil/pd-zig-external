@@ -5,6 +5,7 @@ const HelloWorld = extern struct {
 	var class: *pd.Class = undefined;
 
 	obj: pd.Object,
+	out: *pd.Outlet,
 	sym: *pd.Symbol,
 
 	fn bang(self: *const Self) void {
@@ -12,24 +13,18 @@ const HelloWorld = extern struct {
 	}
 
 	fn float(self: *const Self, f: pd.Float) void {
-		self.obj.out.float(f * 2);
+		self.out.float(f * 2);
 	}
 
 	fn symbol(self: *Self, s: *pd.Symbol) void {
 		self.sym = s;
 	}
 
-	inline fn _new() !*Self {
-		const self: *Self = @ptrCast(class.new() orelse return error.NoSetup);
-		errdefer pd.mem.destroy(self);
-
-		_ = self.obj.outlet(pd.s.float);
+	fn new() ?*Self {
+		const self: *Self = @ptrCast(class.new() orelse return null);
+		self.out = self.obj.outlet(pd.s.float);
 		self.sym = pd.symbol("world");
 		return self;
-	}
-
-	fn new() ?*Self {
-		return _new() catch null;
 	}
 
 	inline fn setup() void {

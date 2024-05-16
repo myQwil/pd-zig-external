@@ -191,7 +191,7 @@ pub const Class = extern struct {
 	pub const propertiesFn = class_getpropertiesfn;
 	extern fn class_setfreefn(*Class, ClassFreeFn) void;
 	pub const setFreeFn = class_setfreefn;
-	extern fn pd_new(*Class) ?*Pd;
+	extern fn pd_new(*const Class) ?*Pd;
 	pub const new = pd_new;
 
 	extern fn pd_findbyclass(*Symbol, *const Class) ?*Pd;
@@ -402,10 +402,15 @@ pub const mem = Allocator {
 
 // ---------------------------------- Object -----------------------------------
 // -----------------------------------------------------------------------------
+pub const GObj = extern struct {
+	pd: Pd,
+	next: *GObj,
+};
+
 pub const Object = extern struct {
 	g: GObj,
 	binbuf: *BinBuf,
-	out: *Outlet,
+	out: ?*Outlet,
 	in: ?*Inlet,
 	xpix: i16,
 	ypix: i16,
@@ -474,7 +479,7 @@ pub const Outlet = opaque {
 // ------------------------------------ Pd -------------------------------------
 // -----------------------------------------------------------------------------
 pub const Pd = extern struct {
-	_: *Class,
+	_: *const Class,
 
 	extern fn pd_free(*Pd) void;
 	pub const free = pd_free;
@@ -712,11 +717,6 @@ pub const setFileName = glob_setfilename;
 pub const OutConnect = opaque {};
 pub const Template = opaque {};
 pub const Array = opaque {};
-
-pub const GObj = extern struct {
-	pd: Pd,
-	next: *GObj,
-};
 
 pub const GStub = extern struct {
 	un: extern union {
