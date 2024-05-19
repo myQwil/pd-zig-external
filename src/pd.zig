@@ -35,15 +35,15 @@ pub const Atom = extern struct {
 	pub const symbol = atom_getsymbol;
 
 	extern fn atom_getintarg(u32, u32, *const Atom) Int;
-	pub inline fn intArg(self: *const Atom, which: u32, ac: u32) Int {
+	pub fn intArg(self: *const Atom, which: u32, ac: u32) Int {
 		return atom_getintarg(which, ac, self);
 	}
 	extern fn atom_getfloatarg(u32, u32, *const Atom) Float;
-	pub inline fn floatArg(self: *const Atom, which: u32, ac: u32) Float {
+	pub fn floatArg(self: *const Atom, which: u32, ac: u32) Float {
 		return atom_getfloatarg(which, ac, self);
 	}
 	extern fn atom_getsymbolarg(u32, u32, *const Atom) *Symbol;
-	pub inline fn symbolArg(self: *const Atom, which: u32, ac: u32) *Symbol {
+	pub fn symbolArg(self: *const Atom, which: u32, ac: u32) *Symbol {
 		return atom_getsymbolarg(which, ac, self);
 	}
 };
@@ -203,7 +203,7 @@ pub const Class = extern struct {
 	pub const new = pd_new;
 
 	extern fn pd_findbyclass(*Symbol, *const Class) ?*Pd;
-	pub inline fn find(self: *const Class, sym: *Symbol) ?*Pd {
+	pub fn find(self: *const Class, sym: *Symbol) ?*Pd {
 		return pd_findbyclass(sym, self);
 	}
 
@@ -435,25 +435,25 @@ pub const GObj = extern struct {
 };
 
 pub const Object = extern struct {
-	g: GObj,
-	binbuf: *BinBuf,
-	out: ?*Outlet,
-	in: ?*Inlet,
-	xpix: i16,
+	g: GObj,            // header for graphical object
+	binbuf: *BinBuf,    // holder for the text
+	outlets: ?*Outlet,  // linked list of outlets
+	inlets: ?*Inlet,    // linked list of inlets
+	xpix: i16,          // x&y location (within the toplevel)
 	ypix: i16,
-	width: i16,
+	width: i16,         // requested width in chars, 0 if auto
 	type: enum(u8) {
-		text = 0,
-		object = 1,
-		message = 2,
-		atom = 3,
+		text = 0,        // just a textual comment
+		object = 1,      // a MAX style patchable object
+		message = 2,     // a MAX type message
+		atom = 3,        // a cell to display a number or symbol
 	},
 
 	extern fn obj_list(*Object, *Symbol, u32, [*]Atom) void;
 	pub const list = obj_list;
 	extern fn obj_saveformat(*const Object, ?*BinBuf) void;
 	pub const saveFormat = obj_saveformat;
-	extern fn outlet_new(*Object, *Symbol) *Outlet;
+	extern fn outlet_new(*Object, ?*Symbol) *Outlet;
 	pub const outlet = outlet_new;
 	extern fn inlet_new(*Object, *Pd, ?*Symbol, ?*Symbol) *Inlet;
 	pub const inlet = inlet_new;
@@ -466,13 +466,13 @@ pub const Object = extern struct {
 	extern fn signalinlet_new(*Object, Float) *Inlet;
 	pub const inletSignal = signalinlet_new;
 
-	pub inline fn inletFloatArg(obj: *Object, fp: *Float, av: []const Atom, i: usize)
+	pub fn inletFloatArg(obj: *Object, fp: *Float, av: []const Atom, i: usize)
 	*Inlet {
 		fp.* = (&av[0]).floatArg(@intCast(i), @intCast(av.len));
 		return obj.inletFloat(fp);
 	}
 
-	pub inline fn inletSymbolArg(obj: *Object, sp: **Symbol, av: []const Atom, i: usize)
+	pub fn inletSymbolArg(obj: *Object, sp: **Symbol, av: []const Atom, i: usize)
 	*Inlet {
 		sp.* = (&av[0]).symbolArg(@intCast(i), @intCast(av.len));
 		return obj.inletSymbol(sp);
@@ -827,12 +827,6 @@ pub fn ulog2(n: u64) u6 {
 	return r;
 }
 
-pub inline fn floatPassive(fp: *Float, av: []const Atom, i: usize) void {
-	if (i < av.len and av[i].type == AtomType.FLOAT) {
-		fp.* = av[i].w.float;
-	}
-}
-
 pub extern fn mtof(Float) Float;
 pub extern fn ftom(Float) Float;
 pub extern fn rmstodb(Float) Float;
@@ -856,12 +850,12 @@ pub const BigOrSmall32 = extern union {
 	f: Float,
 	ui: u32,
 };
-pub inline fn badFloat(f: Float) bool {
+pub fn badFloat(f: Float) bool {
 	var pun = BigOrSmall32 { .f = f };
 	pun.ui &= 0x7f800000;
 	return pun.ui == 0 or pun.ui == 0x7f800000;
 }
-pub inline fn bigOrSmall(f: Float) bool {
+pub fn bigOrSmall(f: Float) bool {
 	const pun = BigOrSmall32 { .f = f };
 	return pun.ui & 0x20000000 == (pun.ui >> 1) & 0x20000000;
 }
