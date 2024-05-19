@@ -8,6 +8,14 @@ pub const FloatUInt = if (Float == f64) u64 else u32;
 pub const Method = ?*const fn () void;
 pub const NewMethod = ?*const fn () *anyopaque;
 
+pub const Word = extern union {
+	float: Float,
+	symbol: *Symbol,
+	gpointer: *GPointer,
+	array: *Array,
+	binbuf: *BinBuf,
+	index: i32,
+};
 
 // ----------------------------------- Atom ------------------------------------
 // -----------------------------------------------------------------------------
@@ -329,6 +337,25 @@ pub const GList = opaque {
 
 // --------------------------------- GPointer ----------------------------------
 // -----------------------------------------------------------------------------
+pub const Scalar = extern struct {
+	gobj: GObj,
+	template: *Symbol,
+	vec: [1]Word,
+};
+
+pub const GStub = extern struct {
+	un: extern union {
+		glist: *GList,
+		array: *Array,
+	},
+	which: enum(u32) {
+		none,
+		glist,
+		array,
+	},
+	refcount: i32,
+};
+
 pub const GPointer = extern struct {
 	un: extern union {
 		scalar: *Scalar,
@@ -717,34 +744,6 @@ pub const setFileName = glob_setfilename;
 pub const OutConnect = opaque {};
 pub const Template = opaque {};
 pub const Array = opaque {};
-
-pub const GStub = extern struct {
-	un: extern union {
-		glist: *GList,
-		array: *Array,
-	},
-	which: enum(u32) {
-		none,
-		glist,
-		array,
-	},
-	refcount: i32,
-};
-
-pub const Scalar = extern struct {
-	gobj: GObj,
-	template: *Symbol,
-	vec: [1]Word,
-};
-
-pub const Word = extern union {
-	float: Float,
-	symbol: *Symbol,
-	gpointer: *GPointer,
-	array: *Array,
-	binbuf: *BinBuf,
-	index: i32,
-};
 
 pub extern var pd_objectmaker: Pd;
 pub extern var pd_canvasmaker: Pd;
