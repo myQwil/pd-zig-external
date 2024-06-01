@@ -22,14 +22,14 @@ const HelloWorld = extern struct {
 
 	fn new() ?*Self {
 		const self: *Self = @ptrCast(class.new() orelse return null);
-		self.out = self.obj.outlet(pd.s.float);
+		self.out = self.obj.outlet(pd.s.float).?;
 		self.sym = pd.symbol("world");
 		return self;
 	}
 
 	inline fn setup() void {
 		class = pd.class(pd.symbol("helloworld"), @ptrCast(&new), null,
-			@sizeOf(Self), pd.Class.DEFAULT, 0);
+			@sizeOf(Self), pd.Class.DEFAULT, 0).?;
 		class.addBang(@ptrCast(&bang));
 		class.addFloat(@ptrCast(&float));
 		class.addSymbol(@ptrCast(&symbol));
