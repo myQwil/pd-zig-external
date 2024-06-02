@@ -49,7 +49,7 @@ def re_type(m):
 r_param = r'(\w+): (?:\[\*c\]|\?\*)(const )?([\w\.]+)'
 def re_param(m):
 	name = m.group(1)
-	p = '[*]' if name in vec_names or m.group(3) == 'u8' else '*'
+	p = '[*]' if name in vec_names else '[*:0]' if m.group(3) == 'u8' else '*'
 	return m.group(1) + ': ' + p + (m.group(2) or '') + m.group(3)
 
 r_dblptr = r'\[\*c\]\[\*c\](const )?([\w\.]+)'

@@ -567,15 +567,12 @@ pub const WidgetBehavior = opaque {};
 pub const ParentWidgetBehavior = opaque {};
 
 pub const post = c.post;
-pub const startpost = c.startpost;
-pub const poststring = c.poststring;
-pub const postfloat = c.postfloat;
-pub const postatom = c.postatom;
-pub const endpost = c.endpost;
+pub const startPost = c.startpost;
+pub const postString = c.poststring;
+pub const postFloat = c.postfloat;
+pub const postAtom = c.postatom;
+pub const endPost = c.endpost;
 pub const bug = c.bug;
-
-pub extern fn logpost(?*const anyopaque, LogLevel, [*]const u8, ...) void;
-pub extern fn verbose(LogLevel, [*]const u8, ...) void;
 
 pub const LogLevel = enum(c_uint) {
 	critical,
@@ -584,6 +581,9 @@ pub const LogLevel = enum(c_uint) {
 	debug,
 	verbose,
 };
+pub extern fn logpost(?*const anyopaque, LogLevel, [*]const u8, ...) void;
+pub const logPost = logpost;
+pub extern fn verbose(LogLevel, [*]const u8, ...) void;
 
 pub const openViaPath = c.open_via_path;
 pub const getEventNo = c.sched_geteventno;
