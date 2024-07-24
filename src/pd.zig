@@ -1,10 +1,13 @@
+const std = @import("std");
+// const opt = @import("options");
+const cnv = @import("canvas.zig");
 const c = @import("m_pd.zig");
 
 pub extern const pd_compatibilitylevel: c_int;
 
 pub const Int = c.t_int;
-pub const Float = c.t_float;
-pub const Sample = c.t_sample;
+pub const Float = c.t_float; // std.meta.Float(opt.float_size);
+pub const Sample = Float;
 
 pub const Method = c.t_method;
 pub const NewMethod = c.t_newmethod;
@@ -14,7 +17,7 @@ pub const Word = extern union {
 	float: Float,
 	symbol: *Symbol,
 	gpointer: *GPointer,
-	array: *Array,
+	array: *cnv.Array,
 	binbuf: *BinBuf,
 	index: c_int,
 };
@@ -22,8 +25,34 @@ pub const Word = extern union {
 // ----------------------------------- Atom ------------------------------------
 // -----------------------------------------------------------------------------
 pub const Atom = extern struct {
-	type: c.t_atomtype,
+	type: Type,
 	w: Word,
+
+	pub const Type = enum(c_uint) {
+		none,
+		float,
+		symbol,
+		pointer,
+		semi,
+		comma,
+		deffloat,
+		defsymbol,
+		dollar,
+		dollsym,
+		gimme,
+		cant,
+
+		const Tuple = std.meta.Tuple;
+		fn tuple(comptime args: []const Type)
+		Tuple(&[_]type {c_uint} ** (args.len + 1)) {
+			var arr: Tuple(&[_]type {c_uint} ** (args.len + 1)) = undefined;
+			inline for (0..args.len) |i| {
+				arr[i] = @intFromEnum(args[i]);
+			}
+			arr[args.len] = @intFromEnum(Type.none);
+			return arr;
+		}
+	};
 
 	pub const int = c.atom_getint;
 	pub const float = c.atom_getfloat;
@@ -33,36 +62,17 @@ pub const Atom = extern struct {
 	pub fn bufPrint(self: *const Atom, buf: []u8) void {
 		c.atom_string(self, buf.ptr, @intCast(buf.len));
 	}
-
-	// static methods
-	pub fn intArg(av: []const Atom, which: usize) Int {
-		return c.atom_getintarg(@intCast(which), @intCast(av.len), av.ptr);
-	}
-	pub fn floatArg(av: []const Atom, which: usize) Float {
-		return c.atom_getfloatarg(@intCast(which), @intCast(av.len), av.ptr);
-	}
-	pub fn symbolArg(av: []const Atom, which: usize) *Symbol {
-		return c.atom_getsymbolarg(@intCast(which), @intCast(av.len), av.ptr);
-	}
 };
 
-// variadic functions can't work with enum literals, even if the enum has
-// an explicit tag type, so this enum is really just being used as a namespace.
-pub const AtomType = enum {
-	pub const NULL: u32 = 0;
-	pub const FLOAT: u32 = 1;
-	pub const SYMBOL: u32 = 2;
-	pub const POINTER: u32 = 3;
-	pub const SEMI: u32 = 4;
-	pub const COMMA: u32 = 5;
-	pub const DEFFLOAT: u32 = 6;
-	pub const DEFSYM: u32 = 7;
-	pub const DEFSYMBOL: u32 = 7;
-	pub const DOLLAR: u32 = 8;
-	pub const DOLLSYM: u32 = 9;
-	pub const GIMME: u32 = 10;
-	pub const CANT: u32 = 11;
-};
+pub fn intArg(av: []const Atom, which: usize) Int {
+	return c.atom_getintarg(@intCast(which), @intCast(av.len), av.ptr);
+}
+pub fn floatArg(av: []const Atom, which: usize) Float {
+	return c.atom_getfloatarg(@intCast(which), @intCast(av.len), av.ptr);
+}
+pub fn symbolArg(av: []const Atom, which: usize) *Symbol {
+	return c.atom_getsymbolarg(@intCast(which), @intCast(av.len), av.ptr);
+}
 
 
 // ---------------------------------- BinBuf -----------------------------------
@@ -81,12 +91,16 @@ pub const BinBuf = opaque {
 	pub const print = c.binbuf_print;
 	pub const nAtoms = c.binbuf_getnatom;
 	pub const vec = c.binbuf_getvec;
-	pub const resize = c.binbuf_resize;
 	pub const eval = c.binbuf_eval;
 	pub const read = c.binbuf_read;
 	pub const readViaCanvas = c.binbuf_read_via_canvas;
 	pub const readViaPath = c.binbuf_read_via_path;
 	pub const write = c.binbuf_write;
+
+	pub fn resize(self: *BinBuf, newsize: usize) !void {
+		if (self.binbuf_resize(@intCast(newsize)) == 0)
+			return error.OutOfMemory;
+	}
 };
 pub const binbuf = c.binbuf_new;
 pub const evalFile = c.binbuf_evalfile;
@@ -98,19 +112,18 @@ pub const realizeDollSym = c.binbuf_realizedollsym;
 pub const MethodEntry = extern struct {
 	name: *Symbol,
 	fun: GotFn,
-	arg: [6]u8,
+	arg: [max_arg:0]u8,
 };
 
-pub const BangMethod = ?*const fn (*Pd) callconv(.C) void;
-pub const PointerMethod = ?*const fn (*Pd, *GPointer) callconv(.C) void;
-pub const FloatMethod = ?*const fn (*Pd, Float) callconv(.C) void;
-pub const SymbolMethod = ?*const fn (*Pd, *Symbol) callconv(.C) void;
-pub const ListMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) callconv(.C) void;
-pub const AnyMethod = ?*const fn (*Pd, *Symbol, u32, [*]Atom) callconv(.C) void;
-
-pub const SaveFn = ?*const fn (*GObj, ?*BinBuf) callconv(.C) void;
-pub const PropertiesFn = ?*const fn (*GObj, *GList) callconv(.C) void;
-pub const ClassFreeFn = ?*const fn (*Class) callconv(.C) void;
+pub const BangMethod = c.t_bangmethod;
+pub const PointerMethod = c.t_pointermethod;
+pub const FloatMethod = c.t_floatmethod;
+pub const SymbolMethod = c.t_symbolmethod;
+pub const ListMethod = c.t_listmethod;
+pub const AnyMethod = c.t_anymethod;
+pub const SaveFn = c.t_savefn;
+pub const PropertiesFn = c.t_propertiesfn;
+pub const ClassFreeFn = c.t_classfreefn;
 
 pub const Class = extern struct {
 	name: *Symbol,
@@ -118,7 +131,7 @@ pub const Class = extern struct {
 	externdir: *Symbol,
 	size: usize,
 	methods: [*]MethodEntry,
-	nmethod: u32,
+	nmethod: c_uint,
 	freemethod: Method,
 	bangmethod: BangMethod,
 	pointermethod: PointerMethod,
@@ -126,17 +139,25 @@ pub const Class = extern struct {
 	symbolmethod: SymbolMethod,
 	listmethod: ListMethod,
 	anymethod: AnyMethod,
-	wb: ?*const WidgetBehavior,
-	pwb: ?*const ParentWidgetBehavior,
+	wb: ?*const cnv.WidgetBehavior,
+	pwb: ?*const cnv.ParentWidgetBehavior,
 	savefn: SaveFn,
 	propertiesfn: PropertiesFn,
-	next: *Class,
-	floatsignalin: c_int,
-	flags: u8,
+	next: ?*Class,
+	floatsignalin: c_uint,
+	flags: packed struct(u8) {
+		gobj: bool,              // true if is a gobj
+		patchable: bool,         // true if we have a t_object header
+		firstin: bool,           // if so, true if drawing first inlet
+		drawcommand: bool,       // drawing command for a template
+		multichannel: bool,      // can deal with multichannel sigs
+		nopromotesig: bool,      // don't promote scalars to signals
+		nopromoteleft: bool,     // not even the main (left) inlet
+		_padding: u1,
+	},
 	classfreefn: ClassFreeFn,
 
 	pub const free = c.class_free;
-	pub const addMethod = c.class_addmethod;
 	pub const addBang = c.class_addbang;
 	pub const addPointer = c.class_addpointer;
 	pub const addFloat = c.class_doaddfloat;
@@ -150,7 +171,6 @@ pub const Class = extern struct {
 	pub const helpName = c.class_gethelpname;
 	pub const helpDir = c.class_gethelpdir;
 	pub const setDrawCommand = c.class_setdrawcommand;
-	pub const isDrawCommand = c.class_isdrawcommand;
 	pub const doMainSignalIn = c.class_domainsignalin;
 	pub const setSaveFn = c.class_setsavefn;
 	pub const saveFn = c.class_getsavefn;
@@ -159,23 +179,63 @@ pub const Class = extern struct {
 	pub const setFreeFn = c.class_setfreefn;
 	pub const new = c.pd_new;
 
+	pub fn isDrawCommand(self: *const Class) bool {
+		return (self.class_isdrawcommand() != 0);
+	}
+
 	pub fn find(self: *const Class, sym: *Symbol) ?*Pd {
 		return c.pd_findbyclass(sym, self);
 	}
 
-	pub const DEFAULT: u32 = 0;     // flags for new classes below
-	pub const PD: u32 = 1;          // non-canvasable (bare) pd such as an inlet
-	pub const GOBJ: u32 = 2;        // pd that can belong to a canvas
-	pub const PATCHABLE: u32 = 3;   // pd that also can have inlets and outlets
-	pub const TYPEMASK: u32 = 3;
-	pub const NOINLET: u32 = 8;          // suppress left inlet
-	pub const MULTICHANNEL: u32 = 0x10;  // can deal with multichannel signals
-	pub const NOPROMOTESIG: u32 = 0x20;  // don't promote scalars to signals
-	pub const NOPROMOTELEFT: u32 = 0x40; // not even the main (left) inlet
+	pub const Options = struct {
+		bare: bool = false,      // non-canvasable pd such as an inlet
+		gobj: bool = false,      // pd that can belong to a canvas
+		patchable: bool = false, // pd that also can have inlets and outlets
+
+		no_inlet: bool = false,        // suppress left inlet
+		multichannel: bool = false,    // can deal with multichannel signals
+		no_promote_sig: bool = false,  // don't promote scalars to signals
+		no_promote_left: bool = false, // not even the main (left) inlet
+
+		fn mask(self: Options) c_int {
+			return @intFromBool(self.bare)
+				| (@as(u2, @intFromBool(self.gobj)) << 1)
+				| (@as(u2, @intFromBool(self.patchable)) * 3)
+				| (@as(u4, @intFromBool(self.no_inlet)) << 3)
+				| (@as(u5, @intFromBool(self.multichannel)) << 4)
+				| (@as(u6, @intFromBool(self.no_promote_sig)) << 5)
+				| (@as(u7, @intFromBool(self.no_promote_left)) << 6);
+		}
+	};
+
+	pub fn addMethod(
+		cls: *Class, func: Method, sel: *Symbol, comptime args: []const Atom.Type,
+	) void {
+		@call(.auto, c.class_addmethod, .{ cls, func, sel } ++ Atom.Type.tuple(args));
+	}
 };
-pub const class = c.class_new;
-pub const class64 = c.class_new64;
-pub const addCreator = c.class_addcreator;
+
+pub fn class(
+	name: *Symbol, newmethod: NewMethod, freemethod: Method, size: usize,
+	flags: Class.Options, comptime args: []const Atom.Type,
+) ?*Class {
+	return @call(.auto, c.class_new,
+		.{ name, newmethod, freemethod, size, flags.mask() } ++ Atom.Type.tuple(args));
+}
+
+pub fn class64(
+	name: *Symbol, newmethod: NewMethod, freemethod: Method, size: usize,
+	flags: Class.Options, comptime args: []const Atom.Type,
+) ?*Class {
+	return @call(.auto, c.class_new64,
+		.{ name, newmethod, freemethod, size, flags.mask() } ++ Atom.Type.tuple(args));
+}
+
+pub fn addCreator(
+	newmethod: NewMethod, sym: *Symbol, comptime args: []const Atom.Type,
+) void {
+	@call(.auto, c.class_addcreator, .{ newmethod, sym } ++ Atom.Type.tuple(args));
+}
 
 pub extern const garray_class: *Class;
 pub extern const scalar_class: *Class;
@@ -195,8 +255,7 @@ pub const Clock = opaque {
 	}
 };
 pub const clock = c.clock_new;
-pub const logicalTime = c.clock_getlogicaltime;
-pub const sysTime = c.clock_getsystime;
+pub const time = c.clock_getlogicaltime;
 pub const timeSince = c.clock_gettimesince;
 pub const sysTimeAfter = c.clock_getsystimeafter;
 
@@ -221,12 +280,10 @@ pub const dsp = struct {
 // ---------------------------------- GArray -----------------------------------
 // -----------------------------------------------------------------------------
 pub const GArray = opaque {
-	pub const floatArray = c.garray_getfloatarray;
 	pub const redraw = c.garray_redraw;
 	pub const nPoints = c.garray_npoints;
 	pub const vec = c.garray_vec;
-	pub const resize = c.garray_resize;
-	pub const resizeLong = c.garray_resize_long;
+	pub const resize = c.garray_resize_long;
 	pub const useInDsp = c.garray_usedindsp;
 	pub const setSaveIt = c.garray_setsaveit;
 	pub const glist = c.garray_getglist;
@@ -241,33 +298,22 @@ pub const GArray = opaque {
 };
 
 
-// ----------------------------------- GList -----------------------------------
-// -----------------------------------------------------------------------------
-pub const GList = opaque {
-	pub const makeFilename = c.canvas_makefilename;
-	pub const dir = c.canvas_getdir;
-	pub const dataProperties = c.canvas_dataproperties;
-	pub const open = c.canvas_open;
-	pub const sampleRate = c.canvas_getsr;
-	pub const signalLength = c.canvas_getsignallength;
-	pub const undoSetState = c.pd_undo_set_objectstate;
-	// static methods
-	pub const setArgs = c.canvas_setargs;
-	pub const args = c.canvas_getargs;
-	pub const current = c.canvas_getcurrent;
-};
-
-
 // --------------------------------- GPointer ----------------------------------
 // -----------------------------------------------------------------------------
 pub const Scalar = c.struct__scalar;
 pub const GStub = extern struct {
 	un: extern union {
-		glist: *GList,
-		array: *Array,
+		glist: *cnv.GList,
+		array: *cnv.Array,
 	},
-	which: enum(c_int) { none, glist, array },
+	which: Type,
 	refcount: c_int,
+
+	const Type = enum(c_uint) {
+		none,
+		glist,
+		array,
+	};
 };
 
 pub const GPointer = extern struct {
@@ -307,8 +353,8 @@ pub const Inlet = extern struct {
 
 // ---------------------------------- Memory -----------------------------------
 // -----------------------------------------------------------------------------
-const Allocator = @import("std").mem.Allocator;
-const assert = @import("std").debug.assert;
+const Allocator = std.mem.Allocator;
+const assert = std.debug.assert;
 
 fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
 	assert(len > 0);
@@ -349,34 +395,38 @@ pub const Object = extern struct {
 	xpix: i16,          // x&y location (within the toplevel)
 	ypix: i16,
 	width: i16,         // requested width in chars, 0 if auto
-	type: enum(u8) {
-		text = 0,        // just a textual comment
-		object = 1,      // a MAX style patchable object
-		message = 2,     // a MAX type message
-		atom = 3,        // a cell to display a number or symbol
-	},
+	type: Type,
+
+	const Type = enum(u8) {
+		text,    // just a textual comment
+		object,  // a MAX style patchable object
+		message, // a MAX type message
+		atom,    // a cell to display a number or symbol
+	};
 
 	pub const list = c.obj_list;
 	pub const saveFormat = c.obj_saveformat;
-	pub extern fn outlet_new(*Object, ?*Symbol) ?*Outlet;
+	extern fn outlet_new(*Object, ?*Symbol) ?*Outlet;
 	pub const outlet = outlet_new;
-	pub extern fn inlet_new(*Object, *Pd, ?*Symbol, ?*Symbol) ?*Inlet;
+	extern fn inlet_new(*Object, *Pd, ?*Symbol, ?*Symbol) ?*Inlet;
 	pub const inlet = inlet_new;
 	pub const inletPointer = c.pointerinlet_new;
 	pub const inletFloat = c.floatinlet_new;
 	pub const inletSymbol = c.symbolinlet_new;
 	pub const inletSignal = c.signalinlet_new;
+	pub const xPix = c.text_xpix;
+	pub const yPix = c.text_ypix;
 
 	pub fn inletFloatArg(obj: *Object, fp: *Float, av: []const Atom, i: usize)
 	*Inlet {
-		fp.* = Atom.floatArg(av, i);
+		fp.* = floatArg(av, i);
 		return obj.inletFloat(fp).?;
 	}
 
 	pub fn inletSymbolArg(obj: *Object, sp: **Symbol, av: []const Atom, i: usize)
 	*Inlet {
-		sp.* = Atom.symbolArg(av, i);
-		return obj.inletSymbol(sp);
+		sp.* = symbolArg(av, i);
+		return obj.inletSymbol(sp).?;
 	}
 
 };
@@ -389,7 +439,7 @@ pub const Outlet = opaque {
 	pub const pointer = c.outlet_pointer;
 	pub const float = c.outlet_float;
 	pub const symbol = c.outlet_symbol;
-	pub extern fn outlet_list(*Outlet, ?*Symbol, c_int, [*]Atom) void;
+	extern fn outlet_list(*Outlet, ?*Symbol, c_int, [*]Atom) void;
 	pub const list = outlet_list;
 	pub const anything = c.outlet_anything;
 	pub const toSymbol = c.outlet_getsymbol;
@@ -418,8 +468,7 @@ pub const Pd = extern struct {
 	pub const forwardMess = c.pd_forwardmess;
 	pub const checkObject = c.pd_checkobject;
 	pub const parentWidget = c.pd_getparentwidget;
-	pub const gfxStub = c.gfxstub_new;
-	pub const guiStub = c.pdgui_stub_vnew;
+	pub const vStub = c.pdgui_stub_vnew;
 	pub const func = c.getfn;
 	pub const zFunc = c.zgetfn;
 	pub const newest = c.pd_newest; // static
@@ -506,8 +555,6 @@ pub const blockSize = c.sys_getblksize;
 pub const sampleRate = c.sys_getsr;
 pub const inChannels = c.sys_get_inchannels;
 pub const outChannels = c.sys_get_outchannels;
-pub const vgui = c.sys_vgui;
-pub const gui = c.sys_gui;
 pub const pretendGuiBytes = c.sys_pretendguibytes;
 pub const queueGui = c.sys_queuegui;
 pub const unqueueGui = c.sys_unqueuegui;
@@ -521,7 +568,6 @@ pub const fclose = c.sys_fclose;
 pub const lock = c.sys_lock;
 pub const unlock = c.sys_unlock;
 pub const tryLock = c.sys_trylock;
-pub const isAbsolutePath = c.sys_isabsolutepath;
 pub const bashFilename = c.sys_bashfilename;
 pub const unbashFilename = c.sys_unbashfilename;
 pub const hostFontSize = c.sys_hostfontsize;
@@ -529,6 +575,10 @@ pub const zoomFontWidth = c.sys_zoomfontwidth;
 pub const zoomFontHeight = c.sys_zoomfontheight;
 pub const fontWidth = c.sys_fontwidth;
 pub const fontHeight = c.sys_fontheight;
+
+pub fn isAbsolutePath(dir: [*:0]const u8) bool {
+	return (c.sys_isabsolutepath(dir) != 0);
+}
 
 pub const currentDir = c.canvas_getcurrentdir;
 pub const suspendDsp = c.canvas_suspend_dsp;
@@ -544,10 +594,6 @@ pub const err = c.pd_error;
 
 // ----------------------------------- Misc. -----------------------------------
 // -----------------------------------------------------------------------------
-pub const OutConnect = opaque {};
-pub const Template = opaque {};
-pub const Array = opaque {};
-
 pub extern const pd_objectmaker: Pd;
 pub extern const pd_canvasmaker: Pd;
 
@@ -560,11 +606,8 @@ pub const GotFn5 = c.t_gotfn5;
 
 pub const nullFn = c.nullfn;
 
-pub const sys_font = c.sys_font;
-pub const sys_fontweight = c.sys_fontweight;
-
-pub const WidgetBehavior = opaque {};
-pub const ParentWidgetBehavior = opaque {};
+pub const font = c.sys_font;
+pub const font_weight = c.sys_fontweight;
 
 pub const post = c.post;
 pub const startPost = c.startpost;
@@ -581,9 +624,8 @@ pub const LogLevel = enum(c_uint) {
 	debug,
 	verbose,
 };
-pub extern fn logpost(?*const anyopaque, LogLevel, [*]const u8, ...) void;
+extern fn logpost(?*const anyopaque, LogLevel, [*]const u8, ...) void;
 pub const logPost = logpost;
-pub extern fn verbose(LogLevel, [*]const u8, ...) void;
 
 pub const openViaPath = c.open_via_path;
 pub const getEventNo = c.sched_geteventno;
@@ -611,12 +653,12 @@ pub const fft = c.pd_fft;
 
 pub extern const cos_table: [*]f32;
 
-pub fn ulog2(n: u64) u6 {
+const ushift = std.meta.Int(.unsigned, @log2(@as(f32, @bitSizeOf(usize))));
+pub fn ulog2(n: usize) ushift {
 	var i = n;
-	var r: u6 = 0;
-	while (i > 1) {
+	var r: ushift = 0;
+	while (i > 1) : (i >>= 1) {
 		r += 1;
-		i >>= 1;
 	}
 	return r;
 }
@@ -633,9 +675,9 @@ pub const qSqrt = c.qsqrt;
 pub const qRsqrt = c.qrsqrt;
 
 pub const GuiCallbackFn = c.t_guicallbackfn;
-pub const gfxStubDeleteForKey = c.gfxstub_deleteforkey;
-pub const pdGuiVmess = c.pdgui_vmess;
-pub const pdGuiStubDeleteForKey = c.pdgui_stub_deleteforkey;
+extern fn pdgui_vmess(destination: ?[*]const u8, fmt: [*]const u8, ...) void;
+pub const vMess = pdgui_vmess;
+pub const deleteStubForKey = c.pdgui_stub_deleteforkey;
 pub const cExtern = c.c_extern;
 pub const cAddMess = c.c_addmess;
 
@@ -646,36 +688,34 @@ pub fn bigOrSmall(f: Float) bool {
 	return c.PD_BIGORSMALL(f) != 0;
 }
 
-pub const MidiInstance = opaque {};
-pub const InterfaceInstance = opaque {};
-pub const CanvasInstance = opaque {};
-pub const UgenInstance = opaque {};
-pub const StuffInstance = opaque {};
+pub const InstanceMidi = c.struct__instancemidi;
+pub const InstanceInterface = c.struct__instanceinterface;
+pub const InstanceUgen = c.struct__instanceugen;
+pub const InstanceCanvas = c.struct__instancecanvas;
+pub const InstanceStuff = c.struct__instancestuff;
+pub const Template = c.struct__template;
 pub const PdInstance = extern struct {
 	systime: f64,
 	clock_setlist: *Clock,
-	canvaslist: *GList,
+	canvaslist: *cnv.GList,
 	templatelist: *Template,
 	instanceno: c_int,
 	symhash: **Symbol,
-	midi: ?*MidiInstance,
-	inter: ?*InterfaceInstance,
-	ugen: ?*UgenInstance,
-	gui: ?*CanvasInstance,
-	stuff: ?*StuffInstance,
+	midi: ?*InstanceMidi,
+	inter: ?*InstanceInterface,
+	ugen: ?*InstanceUgen,
+	gui: ?*InstanceCanvas,
+	stuff: ?*InstanceStuff,
 	newest: ?*Pd,
 	islocked: c_int,
 };
 
 pub const this = &c.pd_maininstance;
 
-pub const MAXPDSTRING = c.MAXPDSTRING;
-pub const MAXPDARG = c.MAXPDARG;
-pub const MAXLOGSIG = c.MAXLOGSIG;
-pub const MAXSIGSIZE = c.MAXSIGSIZE;
-
-pub const LOGCOSTABSIZE = c.LOGCOSTABSIZE;
-pub const COSTABSIZE = c.COSTABSIZE;
+pub const max_string = c.MAXPDSTRING;
+pub const max_arg = c.MAXPDARG;
+pub const max_logsig = c.MAXLOGSIG;
+pub const max_sigsize = c.MAXSIGSIZE;
 
 pub const PD_USE_TE_XPIX = c.PD_USE_TE_XPIX;
 pub const PDTHREADS = c.PDTHREADS;

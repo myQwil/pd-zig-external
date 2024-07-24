@@ -20,19 +20,24 @@ const HelloWorld = extern struct {
 		self.sym = s;
 	}
 
+	fn yesNo(self: *Self, f: pd.Float) void {
+		self.out.symbol(if (f != 0) pd.symbol("yes") else pd.symbol("no"));
+	}
+
 	fn new() ?*Self {
 		const self: *Self = @ptrCast(class.new() orelse return null);
-		self.out = self.obj.outlet(pd.s.float).?;
+		self.out = self.obj.outlet(null).?;
 		self.sym = pd.symbol("world");
 		return self;
 	}
 
 	inline fn setup() void {
 		class = pd.class(pd.symbol("helloworld"), @ptrCast(&new), null,
-			@sizeOf(Self), pd.Class.DEFAULT, 0).?;
+			@sizeOf(Self), .{}, &.{}).?;
 		class.addBang(@ptrCast(&bang));
 		class.addFloat(@ptrCast(&float));
 		class.addSymbol(@ptrCast(&symbol));
+		class.addMethod(@ptrCast(&yesNo), pd.symbol("yesno"), &.{ .float });
 	}
 };
 
