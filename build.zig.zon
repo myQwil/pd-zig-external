@@ -1,0 +1,19 @@
+.{
+    .name = "pd_zig_external",
+    .version = "0.1.1",
+    .dependencies = .{
+        .pd_module = .{
+            .url = "git+https://github.com/myQwil/pd_module#v0.1.4",
+            .hash = "1220674717fd39fdfa79ce68996f210532220ab0b7c04ad30420871e298081494fbb",
+        },
+    },
+    .paths = .{
+        "help",
+        "src",
+        "build.zig",
+        "build.zig.zon",
+        "InstallLink.zig",
+        "LICENSE",
+        "README.md",
+    },
+}

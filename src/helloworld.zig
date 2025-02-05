@@ -1,4 +1,4 @@
-const pd = @import("pd.zig");
+const pd = @import("pd");
 
 const HelloWorld = extern struct {
 	const Self = @This();
@@ -8,39 +8,49 @@ const HelloWorld = extern struct {
 	out: *pd.Outlet,
 	sym: *pd.Symbol,
 
-	fn bang(self: *const Self) void {
-		pd.post("Hello %s!", self.sym.name);
+	fn bangC(self: *const Self) callconv(.C) void {
+		pd.post.do("Hello %s!", .{ self.sym.name });
 	}
 
-	fn float(self: *const Self, f: pd.Float) void {
+	fn floatC(self: *const Self, f: pd.Float) callconv(.C) void {
 		self.out.float(f * 2);
 	}
 
-	fn symbol(self: *Self, s: *pd.Symbol) void {
+	fn symbolC(self: *Self, s: *pd.Symbol) callconv(.C) void {
 		self.sym = s;
 	}
 
-	fn yesNo(self: *Self, f: pd.Float) void {
+	fn yesNoC(self: *Self, f: pd.Float) callconv(.C) void {
 		self.out.symbol(if (f != 0) pd.symbol("yes") else pd.symbol("no"));
 	}
 
-	fn new() ?*Self {
-		const self: *Self = @ptrCast(class.new() orelse return null);
-		self.out = self.obj.outlet(null).?;
+	inline fn new() !*Self {
+		const self: *Self = @ptrCast(try class.pd());
+		errdefer @as(*pd.Pd, @ptrCast(self)).free();
+
+		self.out = try self.obj.outlet(&pd.s_float);
 		self.sym = pd.symbol("world");
 		return self;
 	}
 
-	inline fn setup() void {
-		class = pd.class(pd.symbol("helloworld"), @ptrCast(&new), null,
-			@sizeOf(Self), .{}, &.{}).?;
-		class.addBang(@ptrCast(&bang));
-		class.addFloat(@ptrCast(&float));
-		class.addSymbol(@ptrCast(&symbol));
-		class.addMethod(@ptrCast(&yesNo), pd.symbol("yesno"), &.{ .float });
+	fn newC() callconv(.C) ?*Self {
+		return new() catch |e| {
+			pd.post.err(null, "%s", .{ @errorName(e).ptr });
+			return null;
+		};
+	}
+
+	inline fn setup() !void {
+		class = try pd.class(pd.symbol("helloworld"), @ptrCast(&newC), null,
+			@sizeOf(Self), .{}, &.{});
+		class.addBang(@ptrCast(&bangC));
+		class.addFloat(@ptrCast(&floatC));
+		class.addSymbol(@ptrCast(&symbolC));
+		class.addMethod(@ptrCast(&yesNoC), pd.symbol("yesno"), &.{ .float });
 	}
 };
 
 export fn helloworld_setup() void {
-	HelloWorld.setup();
+	HelloWorld.setup() catch |e|
+		pd.post.err(null, "%s: %s", .{ @src().fn_name.ptr, @errorName(e).ptr });
 }
