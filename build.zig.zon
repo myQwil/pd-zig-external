@@ -1,10 +1,12 @@
 .{
-    .name = "pd_zig_external",
-    .version = "0.1.1",
+    .name = .pd_zig_external,
+    .version = "0.1.2",
+    .fingerprint = 0x2c40156a2c71bd9c,
+    .minimum_zig_version = "0.14.0",
     .dependencies = .{
-        .pd_module = .{
-            .url = "git+https://github.com/myQwil/pd_module#v0.1.4",
-            .hash = "1220674717fd39fdfa79ce68996f210532220ab0b7c04ad30420871e298081494fbb",
+        .pd = .{
+            .url = "git+https://github.com/myQwil/pd_module#v0.2.6",
+            .hash = "pd_module-0.2.6-NhzzyVAwAQBgTlxpFwnsGhjO7uJnoTRM1-0VULuNELJj",
         },
     },
     .paths = .{

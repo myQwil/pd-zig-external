@@ -1,0 +1,25 @@
+name: Zig Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    runs-on: ${{ matrix.os }}
+
+    name: Build on ${{ matrix.os }}
+
+    steps:
+      # Check out the repository code
+      - uses: actions/checkout@v3
+
+      # Set up Zig using the setup-zig action
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+
+      # Build the project for the specified target
+      - name: Build
+        run: zig build
