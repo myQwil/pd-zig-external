@@ -1,16 +1,12 @@
-name: Zig Build
+name: Linux Build
 
 on: [push, pull_request]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    runs-on: ubuntu-latest
 
-    runs-on: ${{ matrix.os }}
-
-    name: Build on ${{ matrix.os }}
+    name: Build on ubuntu-latest
 
     steps:
       # Check out the repository code
