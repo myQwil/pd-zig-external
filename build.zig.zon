@@ -1,12 +1,12 @@
 .{
     .name = .pd_zig_external,
-    .version = "0.1.2",
+    .version = "0.1.3",
     .fingerprint = 0x2c40156a2c71bd9c,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.16.0-dev.2736+3b515fbed",
     .dependencies = .{
         .pd = .{
-            .url = "git+https://github.com/myQwil/pd_module#v0.2.6",
-            .hash = "pd_module-0.2.6-NhzzyVAwAQBgTlxpFwnsGhjO7uJnoTRM1-0VULuNELJj",
+            .url = "git+https://github.com/myQwil/pd#22b2a70019f042dd107047c16fbb50b83a8b1d4d",
+            .hash = "pd-0.56.2-DC007ShmAgBqGeG5kmTr3zqu-xI1nmsBGjtRW1cReXzy",
         },
     },
     .paths = .{
@@ -14,7 +14,6 @@
         "src",
         "build.zig",
         "build.zig.zon",
-        "InstallLink.zig",
         "LICENSE",
         "README.md",
     },

@@ -1,6 +1,7 @@
 const std = @import("std");
+const pd = @import("pd");
 const LinkMode = std.builtin.LinkMode;
-const installLink = @import("InstallLink.zig").installLink;
+const Build = std.Build;
 
 const PatchMode = enum {
 	/// Install copies of patches.
@@ -16,6 +17,23 @@ const Options = struct {
 	float_size: u8 = 32,
 	patches: PatchMode = .copy,
 	linkage: LinkMode = .dynamic,
+
+	fn init(b: *Build) Options {
+		const default: Options = .{};
+		return .{
+			.float_size = b.option(u8, "float_size",
+				"Size of a floating-point number"
+			) orelse default.float_size,
+
+			.patches = b.option(PatchMode, "patches",
+				"Method for installing Pd patches"
+			) orelse default.patches,
+
+			.linkage = b.option(LinkMode, "linkage",
+				"Library linking method"
+			) orelse default.linkage,
+		};
+	}
 };
 
 const Dependency = enum {
@@ -31,59 +49,24 @@ const externals = [_]External{
 	.{ .name = "helloworld" },
 };
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *Build) !void {
 	const target = b.standardTargetOptions(.{});
 	const optimize = b.standardOptimizeOption(.{});
-
-	//---------------------------------------------------------------------------
-	// Options
-	const default: Options = .{};
-	const opt: Options = .{
-		.float_size = b.option(u8, "float_size",
-			"Size of a floating-point number"
-		) orelse default.float_size,
-
-		.patches = b.option(PatchMode, "patches",
-			"Method for installing Pd patches"
-		) orelse default.patches,
-
-		.linkage = b.option(LinkMode, "linkage",
-			"Library linking method"
-		) orelse default.linkage,
-	};
+	const opt: Options = .init(b);
 
 	//---------------------------------------------------------------------------
 	// Dependencies and modules
-	const pd = b.dependency("pd", .{
-		.target = target,
-		.optimize = optimize,
-		.float_size = opt.float_size,
-	}).module("pd");
+	const pd_mod = b.dependency("pd", .{ .float_size = opt.float_size }).module("pd");
 
 	//---------------------------------------------------------------------------
 	// Install externals
-	const extension = blk: {
-		const os = target.result.os.tag;
-		const arch = target.result.cpu.arch;
-		break :blk b.fmt(".{s}_{s}", .{
-			if      (os.isDarwin())  "d"
-			else if (os == .windows) "m"
-			else                     "l"
-			,
-			if      (arch == .x86_64)  "amd64"
-			else if (arch == .x86)     "i386"
-			else if (arch.isArm())     "arm"
-			else if (arch.isAARCH64()) "arm64"
-			else if (arch.isPowerPC()) "ppc"
-			else                       @tagName(arch)
-		});
-	};
+	const extension = pd.extension(b, target, opt.float_size);
 	for (externals) |x| {
 		const mod = b.createModule(.{
 			.target = target,
 			.optimize = optimize,
 			.root_source_file = b.path(b.fmt("src/{s}.zig", .{ x.name })),
-			.imports = &.{.{ .name = "pd", .module = pd }},
+			.imports = &.{.{ .name = "pd", .module = pd_mod }},
 		});
 		const lib = b.addLibrary(.{
 			.name = x.name,
@@ -106,17 +89,18 @@ pub fn build(b: *std.Build) !void {
 
 	//---------------------------------------------------------------------------
 	// Install help patches and abstractions
-	const InstallFunc = fn(*std.Build, []const u8, []const u8) void;
+	const io = b.graph.io;
+	const InstallFunc = fn(*Build, []const u8, []const u8) void;
 	const installFile: *const InstallFunc = switch (opt.patches) {
-		.symbolic => &installLink,
-		.copy => &std.Build.installFile,
+		.symbolic => &pd.InstallLink.install,
+		.copy => &Build.installFile,
 		.skip => return,
 	};
 
-	for ([_][]const u8{"help"}) |dir_name| {
-		const dir = try std.fs.cwd().openDir(dir_name, .{ .iterate = true });
+	for ([_][]const u8{ "help" }) |dir_name| {
+		const dir = try std.Io.Dir.cwd().openDir(io, dir_name, .{ .iterate = true });
 		var iter = dir.iterate();
-		while (try iter.next()) |file| {
+		while (try iter.next(io)) |file| {
 			if (file.kind != .file) {
 				continue;
 			}
